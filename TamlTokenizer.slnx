@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TamlTokenizer/TamlTokenizer.csproj" />
+    <Project Path="src/TamlVS/TamlVS.csproj" Id="8fe57caa-7d96-42ab-a8aa-8106f5574d39" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/TamlTokenizer.Test/TamlTokenizer.Test.csproj" />
+  </Folder>
+</Solution>

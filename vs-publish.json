@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json.schemastore.org/vsix-publish",
+  "categories": [ "other", "programming languages" ],
+  "identity": {
+    "internalName": "TamlVS",
+    "tags": [ "taml", "language", "syntax", "highlighting" ]
+  },
+  "overview": "README.md",
+  "publisher": "MadsKristensen",
+  "repo": "https://github.com/madskristensen/TamlTokenizer"
+}
