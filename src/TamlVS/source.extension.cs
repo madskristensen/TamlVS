@@ -9,10 +9,10 @@ namespace TamlVS
     internal sealed partial class Vsix
     {
         public const string Id = "TamlVS.7b83d024-c84a-4a22-8898-26756a60c934";
-        public const string Name = "TamlVS";
-        public const string Description = @"Empty VSIX Project.";
+        public const string Name = "TAML";
+        public const string Description = @"Full language support for TAML (Tab Annotated Markup Language) files including syntax highlighting, error detection, document formatting, code folding, and navigation bar support.";
         public const string Language = "en-US";
-        public const string Version = "1.0.902";
+        public const string Version = "1.0.903";
         public const string Author = "Mads Kristensen";
         public const string Tags = "";
         public const bool IsPreview = false;

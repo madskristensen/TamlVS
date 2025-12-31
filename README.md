@@ -11,6 +11,8 @@ Download this extension from the [Visual Studio Marketplace][marketplace] or get
 
 Full language support for TAML (Tab Annotated Markup Language) files in Visual Studio.
 
+![Screenshot showing TAML syntax highlighting and editor features](art/screenshot.png)
+
 ## What is TAML?
 
 TAML is a minimal, tab-based markup language designed for simplicity and readability:
@@ -55,13 +57,10 @@ Format your TAML documents with **Edit > Advanced > Format Document** (Ctrl+K, C
 ### Navigation Bar
 The editor navigation bar shows a hierarchical dropdown of all keys in your document. Click any key to jump directly to it. Keys with children are displayed with indentation to show the document structure.
 
-### Editor Features
-- Outlining/code folding for nested sections
-- Line numbers
-- Brace matching
-- Same word highlighting
-- Preview support
-- Full integration with Visual Studio's editor infrastructure
+![Navigation bar](art/navigation-bar.png)
+
+### Outlining/code folding
+Collapse and expand nested sections using the outlining (code folding) feature. Keys with nested children can be collapsed to hide their contents.
 
 ## Getting Started
 

@@ -5,6 +5,16 @@
     "internalName": "TamlVS",
     "tags": [ "taml", "language", "syntax", "highlighting" ]
   },
+  "assetFiles": [
+    {
+      "pathOnDisk": "art/screenshot.png",
+      "targetPath": "art/screenshot.png"
+    },
+    {
+      "pathOnDisk": "art/navigation-bar.png",
+      "targetPath": "art/navigation-bar.png"
+    }
+  ],
   "overview": "README.md",
   "publisher": "MadsKristensen",
   "repo": "https://github.com/madskristensen/TamlTokenizer"
