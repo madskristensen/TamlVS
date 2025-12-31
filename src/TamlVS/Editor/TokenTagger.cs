@@ -69,7 +69,7 @@ namespace TamlVS
             for (var i = 0; i < tokens.Count; i++)
             {
                 TamlToken token = tokens[i];
-                Span tokenSpanData = token.ToSpan();
+                var tokenSpanData = token.ToSpan();
 
                 // Validate span is within snapshot bounds
                 if (tokenSpanData.End > snapshot.Length)
@@ -92,7 +92,7 @@ namespace TamlVS
                 }
 
                 // Add token for colorization
-                SnapshotSpan span = new SnapshotSpan(snapshot, tokenSpanData);
+                var span = new SnapshotSpan(snapshot, tokenSpanData);
                 TokenTag tag = CreateToken(token.Type, true, false, null);
                 list.Add(new TagSpan<TokenTag>(span, tag));
             }
@@ -108,6 +108,7 @@ namespace TamlVS
             var lastContentPosition = tokens[keyIndex].EndPosition;
             hasNestedKeys = false;
             var foundIndent = false;
+            var lastContentIndex = keyIndex;
 
             for (var i = keyIndex + 1; i < tokens.Count; i++)
             {
@@ -128,9 +129,13 @@ namespace TamlVS
                     if (depth <= 0)
                     {
                         // Back to the same level as the key - end of children
-                        // Look back to find the last newline and end just before it
-                        int endPos = foundIndent ? Math.Min(lastContentPosition, maxLength) : tokens[keyIndex].EndPosition;
-                        return FindPositionBeforeNewline(tokens, i, endPos);
+                        if (!foundIndent)
+                        {
+                            return tokens[keyIndex].EndPosition;
+                        }
+
+                        // Return the end of the last content token (excludes trailing newlines)
+                        return Math.Min(lastContentPosition, maxLength);
                     }
                 }
                 else if (token.Type == TamlTokenType.Key)
@@ -148,20 +153,16 @@ namespace TamlVS
                 }
 
                 // Track the furthest content position while inside indented region
-                // Exclude Newline, Whitespace, Tab, Indent, Dedent tokens so outlining ends at actual content
+                // Only track actual content tokens (Key, Value, Null, EmptyString, Comment)
                 if (depth > 0 && IsContentToken(token.Type) && token.EndPosition > lastContentPosition)
                 {
                     lastContentPosition = Math.Min(token.EndPosition, maxLength);
+                    lastContentIndex = i;
                 }
             }
 
             // If we never found an indent, return the key's end (no children)
-            if (!foundIndent)
-            {
-                return tokens[keyIndex].EndPosition;
-            }
-
-            return FindPositionBeforeNewline(tokens, tokens.Count - 1, lastContentPosition);
+            return foundIndent ? Math.Min(lastContentPosition, maxLength) : tokens[keyIndex].EndPosition;
         }
 
         /// <summary>
@@ -174,30 +175,6 @@ namespace TamlVS
                    type == TamlTokenType.Null ||
                    type == TamlTokenType.EmptyString ||
                    type == TamlTokenType.Comment;
-        }
-
-        /// <summary>
-        /// Finds the position just before the trailing newline, if any.
-        /// </summary>
-        private static int FindPositionBeforeNewline(IReadOnlyList<TamlToken> tokens, int searchFromIndex, int currentEndPos)
-        {
-            // Search backward from the given index to find a newline that ends at or just after our content
-            for (var j = searchFromIndex; j >= 0; j--)
-            {
-                TamlToken t = tokens[j];
-                if (t.Type == TamlTokenType.Newline && t.Position <= currentEndPos && t.EndPosition >= currentEndPos)
-                {
-                    // End just before this newline
-                    return t.Position;
-                }
-                if (t.EndPosition < currentEndPos - 2)
-                {
-                    // We've gone too far back
-                    break;
-                }
-            }
-
-            return currentEndPos;
         }
 
         private void CreateErrorListItems(List<ITagSpan<TokenTag>> list)

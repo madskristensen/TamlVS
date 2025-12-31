@@ -48,6 +48,7 @@
     <Compile Include="Commands\FormatDocumentHandler.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Document.cs" />
+    <Compile Include="Editor\DropdownBars.cs" />
     <Compile Include="Editor\EditorFeatures.cs" />
     <Compile Include="Editor\LanguageFactory.cs" />
     <Compile Include="Editor\TokenTagger.cs" />

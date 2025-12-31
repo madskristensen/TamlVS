@@ -1,16 +1,13 @@
-global using Community.VisualStudio.Toolkit;
-
-global using Microsoft.VisualStudio.Shell;
-
 global using System;
-
+global using Community.VisualStudio.Toolkit;
+global using Microsoft.VisualStudio.Shell;
 global using Task = System.Threading.Tasks.Task;
-
 using System.ComponentModel.Design;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell.Interop;
+using TamlVS.Commands;
 
 namespace TamlVS
 {
@@ -39,6 +36,8 @@ namespace TamlVS
             ((IServiceContainer)this).AddService(typeof(TamlLanguage), language, true);
 
             await this.RegisterCommandsAsync();
+
+            await FormatDocumentHandler.RegisterAsync();
         }
     }
 }

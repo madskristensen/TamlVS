@@ -41,13 +41,22 @@ settings
 Full syntax highlighting support for `.taml` files that follows the official TAML specification. Colors distinguish between keys, values, comments, null values (`~`), and empty strings (`""`).
 
 ### Error Detection
-Real-time syntax validation with inline error messages and warnings displayed in the Error List window. Hover over any error to see detailed information about what went wrong.
+Real-time syntax validation with inline error messages and warnings displayed in the Error List window. Hover over any error to see detailed information about what went wrong. Detects common issues like:
+- Space indentation (TAML requires tabs)
+- Mixed tabs and spaces
+- Invalid characters
+
+### Document Formatting
+Format your TAML documents with **Edit > Advanced > Format Document** (Ctrl+K, Ctrl+D) or format just a selection with **Format Selection** (Ctrl+K, Ctrl+F). The formatter ensures consistent tab-based indentation and proper key-value alignment.
+
+### Navigation Bar
+The editor navigation bar shows a hierarchical dropdown of all keys in your document. Click any key to jump directly to it. Keys with children are displayed with indentation to show the document structure.
 
 ### Editor Features
+- Outlining/code folding for nested sections
 - Line numbers
 - Brace matching
 - Same word highlighting
-- Outlining support
 - Preview support
 - Full integration with Visual Studio's editor infrastructure
 

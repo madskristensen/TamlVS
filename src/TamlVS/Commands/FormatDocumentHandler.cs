@@ -1,61 +1,117 @@
-using Microsoft.VisualStudio.Commanding;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Text.Editor.Commanding.Commands;
-using Microsoft.VisualStudio.Utilities;
-
-using System.ComponentModel.Composition;
 
 using TamlTokenizer;
 
 namespace TamlVS.Commands
 {
-    [Export(typeof(ICommandHandler))]
-    [ContentType(Constants.LanguageName)]
-    [Name(nameof(FormatDocumentHandler))]
-    [TextViewRole(PredefinedTextViewRoles.PrimaryDocument)]
-    internal class FormatDocumentHandler : ICommandHandler<FormatDocumentCommandArgs>
+    internal class FormatDocumentHandler
     {
-        public string DisplayName => nameof(FormatDocumentHandler);
-
-        public CommandState GetCommandState(FormatDocumentCommandArgs args)
+        public static async Task RegisterAsync()
         {
-            return CommandState.Available;
+            // Intercept Edit.FormatDocument command (Ctrl+K, Ctrl+D)
+            await VS.Commands.InterceptAsync(
+                KnownCommands.Edit_FormatDocument.Guid,
+                KnownCommands.Edit_FormatDocument.ID,
+                () => ExecuteFormat(formatSelection: false));
+
+            // Intercept Edit.FormatSelection command (Ctrl+K, Ctrl+F)
+            await VS.Commands.InterceptAsync(
+                KnownCommands.Edit_FormatSelection.Guid,
+                KnownCommands.Edit_FormatSelection.ID,
+                () => ExecuteFormat(formatSelection: true));
         }
 
-        public bool ExecuteCommand(FormatDocumentCommandArgs args, CommandExecutionContext executionContext)
+        private static CommandProgression ExecuteFormat(bool formatSelection)
         {
-            ITextView textView = args.TextView;
-            ITextBuffer buffer = args.SubjectBuffer;
+            return ThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                DocumentView docView = await VS.Documents.GetActiveDocumentViewAsync();
 
-            string originalText = buffer.CurrentSnapshot.GetText();
+                if (docView?.TextBuffer == null || docView.TextBuffer.ContentType.TypeName != Constants.LanguageName)
+                {
+                    return CommandProgression.Continue;
+                }
+
+                ITextBuffer buffer = docView.TextBuffer;
+                ITextView textView = docView.TextView;
+
+                try
+                {
+                    if (formatSelection && !textView.Selection.IsEmpty)
+                    {
+                        return FormatSelection(buffer, textView);
+                    }
+                    else
+                    {
+                        return FormatDocument(buffer);
+                    }
+                }
+                catch
+                {
+                    return CommandProgression.Continue;
+                }
+            });
+        }
+
+        private static CommandProgression FormatDocument(ITextBuffer buffer)
+        {
+            var originalText = buffer.CurrentSnapshot.GetText();
 
             if (string.IsNullOrEmpty(originalText))
             {
-                return true;
+                return CommandProgression.Stop;
             }
 
-            try
-            {
-                string formattedText = Taml.Format(originalText);
+            var formattedText = Taml.Format(originalText);
 
-                // Only update if there are changes
-                if (formattedText != originalText)
+            if (formattedText != originalText)
+            {
+                using (ITextEdit edit = buffer.CreateEdit())
                 {
-                    using (ITextEdit edit = buffer.CreateEdit())
-                    {
-                        edit.Replace(new Span(0, originalText.Length), formattedText);
-                        edit.Apply();
-                    }
+                    edit.Replace(new Span(0, originalText.Length), formattedText);
+                    edit.Apply();
                 }
+            }
 
-                return true;
-            }
-            catch (Exception)
+            return CommandProgression.Stop;
+        }
+
+        private static CommandProgression FormatSelection(ITextBuffer buffer, ITextView textView)
+        {
+            SnapshotSpan selectionSpan = textView.Selection.SelectedSpans[0];
+
+            // Expand selection to full lines for proper formatting
+            ITextSnapshotLine startLine = selectionSpan.Start.GetContainingLine();
+            ITextSnapshotLine endLine = selectionSpan.End.GetContainingLine();
+
+            // If selection ends at the start of a line, use the previous line
+            if (selectionSpan.End == endLine.Start && endLine.LineNumber > startLine.LineNumber)
             {
-                // If formatting fails, don't make any changes
-                return false;
+                endLine = buffer.CurrentSnapshot.GetLineFromLineNumber(endLine.LineNumber - 1);
             }
+
+            var startPos = startLine.Start.Position;
+            var endPos = endLine.End.Position;
+            var selectedText = buffer.CurrentSnapshot.GetText(startPos, endPos - startPos);
+
+            if (string.IsNullOrEmpty(selectedText))
+            {
+                return CommandProgression.Stop;
+            }
+
+            var formattedText = Taml.Format(selectedText);
+
+            if (formattedText != selectedText)
+            {
+                using (ITextEdit edit = buffer.CreateEdit())
+                {
+                    edit.Replace(new Span(startPos, selectedText.Length), formattedText);
+                    edit.Apply();
+                }
+            }
+
+            return CommandProgression.Stop;
         }
     }
 }
