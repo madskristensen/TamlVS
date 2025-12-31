@@ -12,7 +12,7 @@ namespace TamlVS
         public const string Name = "TAML";
         public const string Description = @"Full language support for TAML (Tab Annotated Markup Language) files including syntax highlighting, error detection, document formatting, code folding, and navigation bar support.";
         public const string Language = "en-US";
-        public const string Version = "1.0.903";
+        public const string Version = "1.0.906";
         public const string Author = "Mads Kristensen";
         public const string Tags = "";
         public const bool IsPreview = false;

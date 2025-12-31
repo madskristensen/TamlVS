@@ -7,15 +7,62 @@
   <Include href="VSGlobals.vsct"/>
 
   <Commands package="TamlVS">
+    <Menus>
+      <Menu guid="TamlVS" id="TamlMenu" priority="0x0000" type="Menu">
+        <Parent guid="TamlVS" id="TamlMenuGroup" />
+        <Strings>
+          <ButtonText>TAML</ButtonText>
+        </Strings>
+      </Menu>
+    </Menus>
+
     <Groups>
-      <Group guid="TamlVS" id="SettingsGroup" priority="9000">
+      <!-- Top-level group to hold the TAML submenu -->
+      <Group guid="TamlVS" id="TamlMenuGroup" priority="0x0001">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
+      </Group>
+      <!-- Groups inside the TAML submenu -->
+      <Group guid="TamlVS" id="ConvertGroup" priority="0x0100">
+        <Parent guid="TamlVS" id="TamlMenu"/>
+      </Group>
+      <Group guid="TamlVS" id="SettingsGroup" priority="0x0200">
+        <Parent guid="TamlVS" id="TamlMenu"/>
       </Group>
     </Groups>
 
-    <!--This section defines the elements the user can interact with, like a menu command or a button
-        or combo box in a toolbar. -->
     <Buttons>
+      <Button guid="TamlVS" id="SortKeys" priority="0x0090" type="Button">
+        <Parent guid="TamlVS" id="ConvertGroup" />
+        <Icon guid="ImageCatalogGuid" id="SortAscending" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Sort Keys</ButtonText>
+          <CanonicalName>.TAML.SortKeys</CanonicalName>
+        </Strings>
+      </Button>
+
+      <Button guid="TamlVS" id="CopyAsJson" priority="0x0100" type="Button">
+        <Parent guid="TamlVS" id="ConvertGroup" />
+        <Icon guid="ImageCatalogGuid" id="JSScript" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Copy as JSON</ButtonText>
+          <CanonicalName>.TAML.CopyAsJson</CanonicalName>
+        </Strings>
+      </Button>
+
+      <Button guid="TamlVS" id="PasteAsTaml" priority="0x0110" type="Button">
+        <Parent guid="TamlVS" id="ConvertGroup" />
+        <Icon guid="ImageCatalogGuid" id="Paste" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Paste JSON as TAML</ButtonText>
+          <CanonicalName>.TAML.PasteAsTaml</CanonicalName>
+        </Strings>
+      </Button>
 
       <Button guid="TamlVS" id="OpenSettings" priority="0x0100" type="Button">
         <Parent guid="TamlVS" id="SettingsGroup" />
@@ -23,7 +70,7 @@
         <CommandFlag>IconIsMoniker</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
-          <ButtonText>TAML Settings...</ButtonText>
+          <ButtonText>Settings...</ButtonText>
           <CanonicalName>.TAML.OpenSettings</CanonicalName>
         </Strings>
       </Button>
@@ -31,13 +78,22 @@
   </Commands>
 
   <VisibilityConstraints>
+    <VisibilityItem guid="TamlVS" id="SortKeys" context="EditorFactory" />
+    <VisibilityItem guid="TamlVS" id="CopyAsJson" context="EditorFactory" />
+    <VisibilityItem guid="TamlVS" id="PasteAsTaml" context="EditorFactory" />
     <VisibilityItem guid="TamlVS" id="OpenSettings" context="EditorFactory" />
   </VisibilityConstraints>
 
   <Symbols>
     <GuidSymbol name="EditorFactory" value="{a1b2c3d4-e5f6-7890-abcd-ef1234567890}" />
     <GuidSymbol name="TamlVS" value="{116eef20-e244-4800-a72a-77c14915b8cd}">
-      <IDSymbol name="SettingsGroup" value="0x0002" />
+      <IDSymbol name="TamlMenuGroup" value="0x0001" />
+      <IDSymbol name="TamlMenu" value="0x0002" />
+      <IDSymbol name="ConvertGroup" value="0x0010" />
+      <IDSymbol name="SettingsGroup" value="0x0020" />
+      <IDSymbol name="SortKeys" value="0x0090" />
+      <IDSymbol name="CopyAsJson" value="0x0100" />
+      <IDSymbol name="PasteAsTaml" value="0x0110" />
       <IDSymbol name="OpenSettings" value="0x0200" />
     </GuidSymbol>
   </Symbols>

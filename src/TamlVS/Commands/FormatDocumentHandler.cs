@@ -116,7 +116,7 @@ namespace TamlVS.Commands
 
         private static TamlFormatterOptions GetFormatterOptions()
         {
-            var options = GeneralOptions.Instance;
+            GeneralOptions options = GeneralOptions.Instance;
             return new TamlFormatterOptions
             {
                 AlignValues = options.AlignValues,
