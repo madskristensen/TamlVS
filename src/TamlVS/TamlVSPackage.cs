@@ -1,13 +1,13 @@
 global using System;
+global using System.Runtime.InteropServices;
+global using System.Threading;
 global using Community.VisualStudio.Toolkit;
 global using Microsoft.VisualStudio.Shell;
+global using Microsoft.VisualStudio.Shell.Interop;
+global using TamlVS.Commands;
 global using Task = System.Threading.Tasks.Task;
 using System.ComponentModel.Design;
-using System.Runtime.InteropServices;
-using System.Threading;
 using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Shell.Interop;
-using TamlVS.Commands;
 
 namespace TamlVS
 {
@@ -16,7 +16,9 @@ namespace TamlVS
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [Guid(PackageGuids.TamlVSString)]
 
-    [ProvideLanguageService(typeof(TamlLanguage), Constants.LanguageName, 0, ShowHotURLs = false, DefaultToNonHotURLs = true, EnableLineNumbers = true, EnableAsyncCompletion = true, ShowCompletion = false, ShowDropDownOptions = false, MatchBraces = true, MatchBracesAtCaret = true)]
+    [ProvideOptionPage(typeof(OptionsProvider.GeneralOptionsPage), Constants.LanguageName, "General", 0, 0, true, SupportsProfiles = true)]
+
+    [ProvideLanguageService(typeof(TamlLanguage), Constants.LanguageName, 0, ShowHotURLs = true, DefaultToNonHotURLs = false, EnableLineNumbers = true, EnableAsyncCompletion = true, ShowCompletion = false, ShowDropDownOptions = true, MatchBraces = true, MatchBracesAtCaret = true)]
     [ProvideLanguageExtension(typeof(TamlLanguage), Constants.FileExtension)]
 
     [ProvideEditorFactory(typeof(TamlLanguage), 0, false, CommonPhysicalViewAttributes = (int)__VSPHYSICALVIEWATTRIBUTES.PVA_SupportsPreview, TrustLevel = __VSEDITORTRUSTLEVEL.ETL_AlwaysTrusted)]

@@ -64,7 +64,7 @@ namespace TamlVS
                 await TaskScheduler.Default; // move to a background thread
 
                 var text = _buffer.CurrentSnapshot.GetText();
-                var options = new TamlParserOptions { StrictMode = true };
+                var options = new TamlParserOptions { StrictMode = GeneralOptions.Instance.StrictMode };
                 Result = Taml.Tokenize(text, options);
                 success = true;
             }

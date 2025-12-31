@@ -40,7 +40,16 @@ settings
 ## Features
 
 ### Syntax Highlighting
-Full syntax highlighting support for `.taml` files that follows the official TAML specification. Colors distinguish between keys, values, comments, null values (`~`), and empty strings (`""`).
+Full syntax highlighting support for `.taml` files that follows the official TAML specification. Colors distinguish between:
+- **Keys** - Property names
+- **String values** - Regular text values
+- **Boolean values** - `true` and `false` (highlighted distinctly)
+- **Numeric values** - Integers and decimals (e.g., `42`, `-3.14`)
+- **Null values** - The `~` character
+- **Empty strings** - `""`
+- **Comments** - Lines starting with `#`
+
+![Syntax highlighting](art/syntax-highlighting.png)
 
 ### Error Detection
 Real-time syntax validation with inline error messages and warnings displayed in the Error List window. Hover over any error to see detailed information about what went wrong. Detects issues per the TAML specification:
@@ -61,6 +70,24 @@ The editor navigation bar shows a hierarchical dropdown of all keys in your docu
 
 ### Outlining/code folding
 Collapse and expand nested sections using the outlining (code folding) feature. Keys with nested children can be collapsed to hide their contents.
+
+## Options
+
+Configure the extension behavior via **Tools > Options > TAML > General**.
+
+### Validation
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Enable strict mode | Off | Report warnings for non-standard TAML syntax such as mixed indentation or spaces |
+
+### Formatting
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Align values | On | Align values at the same indentation level to the same column |
+| Trim trailing whitespace | On | Remove trailing whitespace from lines |
+| Ensure trailing newline | On | Ensure the document ends with a single newline |
+| Preserve blank lines | On | Keep blank lines in the document |
+| Tab size | 4 | The visual width of a tab character for alignment calculations (2-8) |
 
 ## Getting Started
 

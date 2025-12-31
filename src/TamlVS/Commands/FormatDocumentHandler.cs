@@ -63,7 +63,7 @@ namespace TamlVS.Commands
                 return CommandProgression.Stop;
             }
 
-            var formattedText = Taml.Format(originalText);
+            var formattedText = Taml.Format(originalText, GetFormatterOptions());
 
             if (formattedText != originalText)
             {
@@ -100,7 +100,7 @@ namespace TamlVS.Commands
                 return CommandProgression.Stop;
             }
 
-            var formattedText = Taml.Format(selectedText);
+            var formattedText = Taml.Format(selectedText, GetFormatterOptions());
 
             if (formattedText != selectedText)
             {
@@ -112,6 +112,19 @@ namespace TamlVS.Commands
             }
 
             return CommandProgression.Stop;
+        }
+
+        private static TamlFormatterOptions GetFormatterOptions()
+        {
+            var options = GeneralOptions.Instance;
+            return new TamlFormatterOptions
+            {
+                AlignValues = options.AlignValues,
+                TrimTrailingWhitespace = options.TrimTrailingWhitespace,
+                EnsureTrailingNewline = options.EnsureTrailingNewline,
+                PreserveBlankLines = options.PreserveBlankLines,
+                TabSize = options.TabSize
+            };
         }
     }
 }

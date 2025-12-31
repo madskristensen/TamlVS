@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
   <Extern href="stdidcmd.h"/>
@@ -8,30 +8,37 @@
 
   <Commands package="TamlVS">
     <Groups>
-      <Group guid="TamlVS" id="MyMenuGroup" priority="0x0600">
-        <Parent guid="VSMainMenu" id="Tools"/>
+      <Group guid="TamlVS" id="SettingsGroup" priority="9000">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
       </Group>
     </Groups>
 
     <!--This section defines the elements the user can interact with, like a menu command or a button
         or combo box in a toolbar. -->
     <Buttons>
-      <Button guid="TamlVS" id="MyCommand" priority="0x0100" type="Button">
-        <Parent guid="TamlVS" id="MyMenuGroup" />
-        <Icon guid="ImageCatalogGuid" id="StatusInformation" />
+
+      <Button guid="TamlVS" id="OpenSettings" priority="0x0100" type="Button">
+        <Parent guid="TamlVS" id="SettingsGroup" />
+        <Icon guid="ImageCatalogGuid" id="Settings" />
         <CommandFlag>IconIsMoniker</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
-          <ButtonText>My Command</ButtonText>
-          <LocCanonicalName>.TamlVS.MyCommand</LocCanonicalName>
+          <ButtonText>TAML Settings...</ButtonText>
+          <CanonicalName>.TAML.OpenSettings</CanonicalName>
         </Strings>
       </Button>
     </Buttons>
   </Commands>
 
+  <VisibilityConstraints>
+    <VisibilityItem guid="TamlVS" id="OpenSettings" context="EditorFactory" />
+  </VisibilityConstraints>
+
   <Symbols>
+    <GuidSymbol name="EditorFactory" value="{a1b2c3d4-e5f6-7890-abcd-ef1234567890}" />
     <GuidSymbol name="TamlVS" value="{116eef20-e244-4800-a72a-77c14915b8cd}">
-      <IDSymbol name="MyMenuGroup" value="0x0001" />
-      <IDSymbol name="MyCommand" value="0x0100" />
+      <IDSymbol name="SettingsGroup" value="0x0002" />
+      <IDSymbol name="OpenSettings" value="0x0200" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>
