@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace TamlTokenizer;
 
@@ -17,6 +16,9 @@ namespace TamlTokenizer;
 /// </remarks>
 public sealed class TamlLexer
 {
+    // Cached tab strings to avoid allocations for common cases
+    private static readonly string[] CachedTabs = { "", "\t", "\t\t", "\t\t\t", "\t\t\t\t" };
+
     private readonly string _source;
     private readonly TamlParserOptions _options;
     private readonly List<TamlError> _errors;
@@ -84,7 +86,8 @@ public sealed class TamlLexer
             };
         }
 
-        var tokens = new List<TamlToken>();
+        // Pre-allocate capacity: rough estimate of 1 token per 5 characters
+        var tokens = new List<TamlToken>(Math.Max(16, _source.Length / 5));
         TamlToken token;
 
         while ((token = NextToken()).Type != TamlTokenType.EndOfFile)
@@ -383,7 +386,9 @@ public sealed class TamlLexer
         // This means # should not be treated as a comment start
         _afterTabSeparator = true;
 
-        return new TamlToken(TamlTokenType.Tab, new string('\t', tabCount), _line, startColumn, start, tabCount);
+        // Use cached tab strings for common cases to avoid allocations
+        string tabValue = tabCount < CachedTabs.Length ? CachedTabs[tabCount] : new string('\t', tabCount);
+        return new TamlToken(TamlTokenType.Tab, tabValue, _line, startColumn, start, tabCount);
     }
 
     private TamlToken ConsumeSpace()
@@ -427,40 +432,45 @@ public sealed class TamlLexer
     {
         int start = _position;
         int startColumn = _column;
-        var sb = new StringBuilder();
 
-        while (_position < _source.Length)
+        // Scan forward to find end of text (tab, newline, or end of source)
+        // This avoids StringBuilder allocation by using Substring
+        int maxEnd = Math.Min(_source.Length, start + _options.MaxStringLength + 1);
+        int end = start;
+
+        while (end < _source.Length)
         {
-            char c = Current;
+            char c = _source[end];
 
             // Stop at tab, newline, or end
-            // Note: Tabs always act as separators in TAML, so "tab in content" cannot occur
             if (c == '\t' || c == '\n' || c == '\r')
             {
                 break;
             }
 
-            sb.Append(c);
-            _position++;
-            _column++;
+            end++;
 
-            // Check string length
-            if (sb.Length > _options.MaxStringLength)
+            // Check string length limit
+            if (end - start > _options.MaxStringLength)
             {
                 _errors.Add(new TamlError(
-                    $"String length ({sb.Length:N0}) exceeds maximum allowed ({_options.MaxStringLength:N0})",
-                    start, sb.Length, _line, startColumn,
+                    "String length (" + (end - start).ToString("N0") + ") exceeds maximum allowed (" + _options.MaxStringLength.ToString("N0") + ")",
+                    start, end - start, _line, startColumn,
                     TamlErrorCode.InputSizeExceeded));
                 break;
             }
         }
 
-        string value = sb.ToString();
+        int length = end - start;
+        _position = end;
+        _column = startColumn + length;
+
+        string value = _source.Substring(start, length);
 
         // Determine if this is a key or value based on context
         // A key is followed by tab(s) OR is at the start of a line (parent key or list item)
         // A value is after a tab separator
-        bool isKey = _position < _source.Length && Current == '\t';
+        bool isKey = _position < _source.Length && _source[_position] == '\t';
 
         // Also consider it a key if it's at the start position of a line (after indentation)
         // This handles parent keys and list items which don't have tab-separated values
@@ -471,7 +481,7 @@ public sealed class TamlLexer
 
         TamlTokenType type = isKey ? TamlTokenType.Key : TamlTokenType.Value;
 
-        return new TamlToken(type, value, _line, startColumn, start, value.Length);
+        return new TamlToken(type, value, _line, startColumn, start, length);
     }
 
     private TamlToken CreateToken(TamlTokenType type, string value)

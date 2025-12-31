@@ -63,8 +63,9 @@ public sealed class TamlFormatter
 
     private List<TamlLine> ParseLines(string source)
     {
-        var lines = new List<TamlLine>();
         var rawLines = source.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
+        // Pre-allocate list capacity
+        var lines = new List<TamlLine>(rawLines.Length);
 
         foreach (var rawLine in rawLines)
         {

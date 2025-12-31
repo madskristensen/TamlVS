@@ -287,4 +287,89 @@ public sealed class FaultToleranceTests
                 $"Missing EOF for: {source}");
         }
     }
+
+    [TestMethod]
+    public void WhenGetTokensWithNullInputThenThrowsArgumentNull()
+    {
+        _ = Assert.ThrowsExactly<ArgumentNullException>(() => Taml.GetTokens(null!));
+    }
+
+    [TestMethod]
+    public void WhenFormatWithNullInputThenThrowsArgumentNull()
+    {
+        _ = Assert.ThrowsExactly<ArgumentNullException>(() => Taml.Format(null!));
+    }
+
+    [TestMethod]
+    public void WhenTokenizeWithNullOptionsThenUsesDefaults()
+    {
+        var source = "key\tvalue";
+
+        var result = Taml.Tokenize(source, null);
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.IsTrue(result.Tokens.Count > 0);
+    }
+
+    [TestMethod]
+    public void WhenTamlTokenEndPositionThenCorrect()
+    {
+        var source = "key\tvalue";
+        var result = Taml.Tokenize(source);
+
+        var keyToken = result.Tokens.First(t => t.Type == TamlTokenType.Key);
+
+        Assert.AreEqual(keyToken.Position + keyToken.Length, keyToken.EndPosition);
+        Assert.AreEqual(0, keyToken.Position);
+        Assert.AreEqual(3, keyToken.Length);
+        Assert.AreEqual(3, keyToken.EndPosition);
+    }
+
+    [TestMethod]
+    public void WhenTamlErrorThenEndPositionCorrect()
+    {
+        var source = "key\n\t\t\tbad"; // Skip levels error
+
+        var result = Taml.Tokenize(source);
+
+        if (result.HasErrors)
+        {
+            var error = result.Errors.First();
+            Assert.AreEqual(error.Position + error.Length, error.EndPosition);
+        }
+    }
+
+    [TestMethod]
+    public void WhenParserOptionsInvalidValuesThenThrows()
+    {
+        var options = new TamlParserOptions();
+
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.MaxInputSize = 0);
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.MaxInputSize = -1);
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.MaxNestingDepth = 0);
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.MaxTokenCount = 0);
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.MaxStringLength = 0);
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.MaxLineCount = 0);
+    }
+
+    [TestMethod]
+    public void WhenParserOptionsValidValuesThenAccepted()
+    {
+        var options = new TamlParserOptions
+        {
+            MaxInputSize = 1000,
+            MaxNestingDepth = 10,
+            MaxTokenCount = 500,
+            MaxStringLength = 100,
+            MaxLineCount = 50,
+            StrictMode = true
+        };
+
+        Assert.AreEqual(1000, options.MaxInputSize);
+        Assert.AreEqual(10, options.MaxNestingDepth);
+        Assert.AreEqual(500, options.MaxTokenCount);
+        Assert.AreEqual(100, options.MaxStringLength);
+        Assert.AreEqual(50, options.MaxLineCount);
+        Assert.IsTrue(options.StrictMode);
+    }
 }

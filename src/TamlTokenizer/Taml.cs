@@ -69,6 +69,7 @@ public static class Taml
     }
 
 
+
     /// <summary>
     /// Validates the structural integrity of a TAML document.
     /// Checks for orphaned lines, parent-with-value errors, and empty keys.
@@ -81,8 +82,8 @@ public static class Taml
         var currentIndentLevel = 0;
 
         // Track keys that have values to detect parent-with-value errors
-        // Key: "line:indent", Value: token info for error reporting
-        var keysWithValues = new Dictionary<string, TamlToken>();
+        // Key: encoded as (line << 16) | indent, Value: token info for error reporting
+        var keysWithValues = new Dictionary<long, TamlToken>();
 
         for (var i = 0; i < tokens.Count; i++)
         {
@@ -173,10 +174,11 @@ public static class Taml
 
     /// <summary>
     /// Creates a dictionary key from line and indent level.
+    /// Uses bit packing to avoid string allocation.
     /// </summary>
-    private static string MakeKey(int line, int indent)
+    private static long MakeKey(int line, int indent)
     {
-        return line.ToString() + ":" + indent.ToString();
+        return ((long)line << 16) | (uint)indent;
     }
 
 
