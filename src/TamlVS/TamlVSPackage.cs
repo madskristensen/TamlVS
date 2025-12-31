@@ -34,7 +34,7 @@ namespace TamlVS
         {
             await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-            TamlLanguage language = new TamlLanguage(this);
+            TamlLanguage language = new(this);
             RegisterEditorFactory(language);
             ((IServiceContainer)this).AddService(typeof(TamlLanguage), language, true);
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="TamlVS.7b83d024-c84a-4a22-8898-26756a60c934" Version="1.0" Language="en-US" Publisher="Mads Kristensen" />
+        <Identity Id="TamlVS.7b83d024-c84a-4a22-8898-26756a60c934" Version="1.0.902" Language="en-US" Publisher="Mads Kristensen" />
         <DisplayName>TamlVS</DisplayName>
         <Description>Empty VSIX Project.</Description>
         <Icon>Resources\Icon.png</Icon>

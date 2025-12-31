@@ -1,6 +1,7 @@
-using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Package;
 using Microsoft.VisualStudio.TextManager.Interop;
+
+using System.Runtime.InteropServices;
 
 namespace TamlVS
 {
@@ -28,7 +29,7 @@ namespace TamlVS
             preferences.HighlightMatchingBraceFlags = _HighlightMatchingBraceFlags.HMB_USERECTANGLEBRACES;
             preferences.LineNumbers = true;
             preferences.MaxErrorMessages = 100;
-            preferences.AutoOutlining = false;
+            preferences.AutoOutlining = true;
             preferences.MaxRegionTime = 2000;
             preferences.InsertTabs = true;
             preferences.IndentSize = 1;

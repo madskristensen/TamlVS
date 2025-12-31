@@ -12,7 +12,7 @@ namespace TamlVS
         public const string Name = "TamlVS";
         public const string Description = @"Empty VSIX Project.";
         public const string Language = "en-US";
-        public const string Version = "1.0";
+        public const string Version = "1.0.902";
         public const string Author = "Mads Kristensen";
         public const string Tags = "";
         public const bool IsPreview = false;

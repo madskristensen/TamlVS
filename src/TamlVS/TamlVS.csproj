@@ -45,6 +45,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Commands\FormatDocumentHandler.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Document.cs" />
     <Compile Include="Editor\EditorFeatures.cs" />

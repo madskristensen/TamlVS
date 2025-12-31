@@ -8,7 +8,7 @@ namespace TamlVS
     public class Document : IDisposable
     {
         private readonly ITextBuffer _buffer;
-        private readonly object _lockObject = new object();
+        private readonly object _lockObject = new();
         private bool _isDisposed;
         private volatile bool _isParsing;
         private TamlParseResult _result;
@@ -64,7 +64,8 @@ namespace TamlVS
                 await TaskScheduler.Default; // move to a background thread
 
                 var text = _buffer.CurrentSnapshot.GetText();
-                Result = Taml.Tokenize(text);
+                var options = new TamlParserOptions { StrictMode = true };
+                Result = Taml.Tokenize(text, options);
                 success = true;
             }
             finally
