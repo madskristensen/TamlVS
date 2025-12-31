@@ -64,10 +64,14 @@ Format your TAML documents with **Edit > Advanced > Format Document** (Ctrl+K, C
 ### Sort Keys
 Place your cursor on any key that has child keys and use the lightbulb menu (Ctrl+.) to sort child keys alphabetically. This helps maintain consistent ordering in configuration files.
 
+![Quick Action](art/quick-action.png)
+
 ### JSON Conversion
 Right-click in a TAML file to access the **TAML** context menu with conversion options:
 - **Copy as JSON** - Converts the entire TAML document to JSON and copies it to the clipboard
 - **Paste JSON as TAML** - Pastes JSON from the clipboard and converts it to TAML format
+
+![Context Menu](art/context-menu.png)
 
 ### Navigation Bar
 The editor navigation bar shows a hierarchical dropdown of all keys in your document. Click any key to jump directly to it. Keys with children are displayed with indentation to show the document structure.

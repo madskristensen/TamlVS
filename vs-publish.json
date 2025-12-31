@@ -13,6 +13,14 @@
     {
       "pathOnDisk": "art/navigation-bar.png",
       "targetPath": "art/navigation-bar.png"
+    },
+    {
+      "pathOnDisk": "art/context-menu.png",
+      "targetPath": "art/context-menu.png"
+    },
+    {
+      "pathOnDisk": "art/quick-action.png",
+      "targetPath": "art/quick-action.png"
     }
   ],
   "overview": "README.md",
