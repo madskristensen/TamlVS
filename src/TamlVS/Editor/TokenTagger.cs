@@ -80,12 +80,12 @@ namespace TamlVS
                 // Check if this key has nested keys for outlining
                 if (token.Type == TamlTokenType.Key)
                 {
-                    var endPosition = FindOutliningEnd(tokens, i, snapshot.Length, out var hasNestedKeys);
+                    var endPosition = FindOutliningEnd(tokens, i, snapshot, out var hasNestedKeys);
 
                     if (hasNestedKeys && endPosition > tokenSpanData.End)
                     {
                         // Create outlining span using Whitespace type so it doesn't affect colorization
-                        var outliningSpan = new SnapshotSpan(snapshot, new Span(tokenSpanData.Start, endPosition - tokenSpanData.Start));
+                        var outliningSpan = new SnapshotSpan(snapshot, Span.FromBounds(tokenSpanData.Start, endPosition));
                         TokenTag outliningTag = CreateToken(TamlTokenType.Whitespace, true, true, null);
                         list.Add(new TagSpan<TokenTag>(outliningSpan, outliningTag));
                     }
@@ -101,14 +101,15 @@ namespace TamlVS
         /// <summary>
         /// Finds the end position for an outlining region starting at the given Key token.
         /// Also determines if the direct children contain nested keys (not just values).
+        /// Returns the position at the end of the last content on the last child's line.
         /// </summary>
-        private static int FindOutliningEnd(IReadOnlyList<TamlToken> tokens, int keyIndex, int maxLength, out bool hasNestedKeys)
+        private static int FindOutliningEnd(IReadOnlyList<TamlToken> tokens, int keyIndex, ITextSnapshot snapshot, out bool hasNestedKeys)
         {
             var depth = 0;
-            var lastContentPosition = tokens[keyIndex].EndPosition;
+            var lastContentLine = tokens[keyIndex].Line;
+            var lastContentEndInLine = tokens[keyIndex].EndPosition;
             hasNestedKeys = false;
             var foundIndent = false;
-            var lastContentIndex = keyIndex;
 
             for (var i = keyIndex + 1; i < tokens.Count; i++)
             {
@@ -118,7 +119,6 @@ namespace TamlVS
                 {
                     if (depth == 0)
                     {
-                        // First indent after the key - this key has children
                         foundIndent = true;
                     }
                     depth++;
@@ -128,41 +128,47 @@ namespace TamlVS
                     depth--;
                     if (depth <= 0)
                     {
-                        // Back to the same level as the key - end of children
                         if (!foundIndent)
                         {
                             return tokens[keyIndex].EndPosition;
                         }
 
-                        // Return the end of the last content token (excludes trailing newlines)
-                        return Math.Min(lastContentPosition, maxLength);
+                        // Return the end position of the last content on its line
+                        return Math.Min(lastContentEndInLine, snapshot.Length);
                     }
                 }
                 else if (token.Type == TamlTokenType.Key)
                 {
                     if (depth == 0)
                     {
-                        // Found a sibling key before any indent - this key has no children
                         return tokens[keyIndex].EndPosition;
                     }
                     else if (depth == 1 && foundIndent)
                     {
-                        // Found a direct child key (at depth 1)
                         hasNestedKeys = true;
                     }
                 }
 
-                // Track the furthest content position while inside indented region
-                // Only track actual content tokens (Key, Value, Null, EmptyString, Comment)
-                if (depth > 0 && IsContentToken(token.Type) && token.EndPosition > lastContentPosition)
+                // Track the last content token's end position
+                // Only update if this is a content token (Key, Value, Null, EmptyString, Comment)
+                if (depth > 0 && IsContentToken(token.Type))
                 {
-                    lastContentPosition = Math.Min(token.EndPosition, maxLength);
-                    lastContentIndex = i;
+                    // If this is on a new line, or further in the same line, update
+                    if (token.Line > lastContentLine || 
+                        (token.Line == lastContentLine && token.EndPosition > lastContentEndInLine))
+                    {
+                        lastContentLine = token.Line;
+                        lastContentEndInLine = token.EndPosition;
+                    }
                 }
             }
 
-            // If we never found an indent, return the key's end (no children)
-            return foundIndent ? Math.Min(lastContentPosition, maxLength) : tokens[keyIndex].EndPosition;
+            if (!foundIndent)
+            {
+                return tokens[keyIndex].EndPosition;
+            }
+
+            return Math.Min(lastContentEndInLine, snapshot.Length);
         }
 
         /// <summary>
