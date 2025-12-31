@@ -143,10 +143,10 @@ public static class SyntaxHighlightingExtensions
     /// <returns>The indentation level (number of tabs) at the line.</returns>
     public static int GetIndentationLevel(this IReadOnlyList<TamlToken> tokens, int line)
     {
-        var lineTokens = tokens.GetTokensOnLine(line);
-        int indentLevel = 0;
+        List<TamlToken> lineTokens = tokens.GetTokensOnLine(line);
+        var indentLevel = 0;
 
-        foreach (var token in lineTokens)
+        foreach (TamlToken token in lineTokens)
         {
             if (token.Type == TamlTokenType.Indent)
             {

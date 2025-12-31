@@ -13,7 +13,7 @@ public sealed class ValidationErrorTests
         // TAML spec: "Only tab characters may be used for indentation. Spaces at the start of a line are invalid."
         var source = "server\n  host\tlocalhost"; // 2 spaces instead of tab
 
-        var result = Taml.TokenizeStrict(source);
+        TamlParseResult result = Taml.TokenizeStrict(source);
 
         Assert.IsTrue(result.HasErrors);
         Assert.IsTrue(result.Errors.Any(e => e.Code == TamlErrorCode.SpaceIndentation));
@@ -25,7 +25,7 @@ public sealed class ValidationErrorTests
         // TAML spec: "Indentation must be pure tabs. No mixing of spaces and tabs."
         var source = "server\n \thost\tlocalhost"; // space + tab
 
-        var result = Taml.TokenizeStrict(source);
+        TamlParseResult result = Taml.TokenizeStrict(source);
 
         Assert.IsTrue(result.HasErrors);
         Assert.IsTrue(result.Errors.Any(e =>
@@ -39,7 +39,7 @@ public sealed class ValidationErrorTests
         // TAML spec: "Each nesting level must increase indentation by exactly one tab. Skipping levels is invalid."
         var source = "server\n\t\t\thost\tlocalhost"; // 3 tabs instead of 1
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.HasErrors);
         Assert.IsTrue(result.Errors.Any(e => e.Code == TamlErrorCode.InconsistentIndentation));
@@ -51,7 +51,7 @@ public sealed class ValidationErrorTests
         // Default lenient mode should continue parsing after errors
         var source = "server\n  host\tlocalhost\nport\t8080"; // space indentation error
 
-        var result = Taml.Tokenize(source); // Default is lenient
+        TamlParseResult result = Taml.Tokenize(source); // Default is lenient
 
         // Should still produce tokens despite error
         Assert.IsTrue(result.Tokens.Count > 1);
@@ -63,11 +63,11 @@ public sealed class ValidationErrorTests
     {
         var source = "line1\tvalue\nline2\n\t\t\tbad\tvalue"; // Skip levels on line 3
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         if (result.HasErrors)
         {
-            var error = result.Errors.First();
+            TamlError error = result.Errors.First();
             Assert.IsTrue(error.Line > 0);
             Assert.IsTrue(error.Column > 0);
         }
@@ -78,11 +78,11 @@ public sealed class ValidationErrorTests
     {
         var source = "key\tvalue\n\t\t\tbad"; // Skip levels
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         if (result.HasErrors)
         {
-            var error = result.Errors.First();
+            TamlError error = result.Errors.First();
             Assert.IsTrue(error.Position >= 0);
         }
     }
@@ -94,7 +94,7 @@ public sealed class ValidationErrorTests
         var options = new TamlParserOptions { MaxNestingDepth = 3 };
         var source = "a\n\tb\n\t\tc\n\t\t\td\n\t\t\t\te"; // 5 levels
 
-        var result = Taml.Tokenize(source, options);
+        TamlParseResult result = Taml.Tokenize(source, options);
 
         Assert.IsTrue(result.HasErrors);
         Assert.IsTrue(result.Errors.Any(e => e.Code == TamlErrorCode.NestingDepthExceeded));
@@ -106,7 +106,7 @@ public sealed class ValidationErrorTests
         var options = new TamlParserOptions { MaxTokenCount = 5 };
         var source = "a\tb\nc\td\ne\tf\ng\th\ni\tj";
 
-        var result = Taml.Tokenize(source, options);
+        TamlParseResult result = Taml.Tokenize(source, options);
 
         Assert.IsTrue(result.HasErrors);
         Assert.IsTrue(result.Errors.Any(e => e.Code == TamlErrorCode.TokenCountExceeded));
@@ -118,7 +118,7 @@ public sealed class ValidationErrorTests
         var options = new TamlParserOptions { MaxInputSize = 10 };
         var source = "this is a long string that exceeds the limit";
 
-        var result = Taml.Tokenize(source, options);
+        TamlParseResult result = Taml.Tokenize(source, options);
 
         Assert.IsTrue(result.HasErrors);
         Assert.IsTrue(result.Errors.Any(e => e.Code == TamlErrorCode.InputSizeExceeded));
@@ -130,7 +130,7 @@ public sealed class ValidationErrorTests
         // Lenient mode should not error on space indentation
         var source = "server\n  host\tlocalhost";
 
-        var result = Taml.Tokenize(source); // Default lenient mode
+        TamlParseResult result = Taml.Tokenize(source); // Default lenient mode
 
         // Should not have space indentation error in lenient mode
         Assert.IsFalse(result.Errors.Any(e => e.Code == TamlErrorCode.SpaceIndentation));
@@ -161,7 +161,7 @@ public sealed class ValidationErrorTests
     {
         var source = "a\n\t\t\tb\tvalue"; // Skip indent levels
 
-        var errors = Taml.Validate(source);
+        IReadOnlyList<TamlError> errors = Taml.Validate(source);
 
         Assert.IsTrue(errors.Count > 0);
     }
@@ -178,7 +178,7 @@ public sealed class ValidationErrorTests
             	port	8080
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual(0, result.Errors.Count);
@@ -208,7 +208,7 @@ public sealed class ValidationErrorTests
             		grandchild	value
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
     }
@@ -218,11 +218,11 @@ public sealed class ValidationErrorTests
     {
         var source = "a\n\t\t\tb\tvalue"; // Skip indent levels
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         if (result.HasErrors)
         {
-            var error = result.Errors.First();
+            TamlError error = result.Errors.First();
             Assert.IsFalse(string.IsNullOrEmpty(error.Message));
             Assert.IsTrue(error.Message.Length > 10); // Should be descriptive
         }
@@ -233,11 +233,11 @@ public sealed class ValidationErrorTests
     {
         var source = "a\n\t\t\tb\tvalue"; // Skip indent levels
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         if (result.HasErrors)
         {
-            var error = result.Errors.First();
+            TamlError error = result.Errors.First();
             Assert.IsNotNull(error.Code);
             Assert.IsTrue(error.Code.StartsWith("TAML"));
         }
@@ -249,7 +249,7 @@ public sealed class ValidationErrorTests
         // Create document with multiple issues
         var source = "a\n\t\t\tb\tvalue\nc\n\t\t\td\tvalue"; // Two skip-level errors
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         // Should collect multiple errors in lenient mode
         Assert.IsTrue(result.HasErrors);
@@ -261,7 +261,7 @@ public sealed class ValidationErrorTests
         // TAML spec: "Indented lines must have a parent. You cannot increase indentation after a key-value pair."
         var source = "name\tvalue\n\torphan\tvalue";
 
-        var result = Taml.TokenizeStrict(source);
+        TamlParseResult result = Taml.TokenizeStrict(source);
 
         Assert.IsTrue(result.HasErrors);
         Assert.IsTrue(result.Errors.Any(e => e.Code == TamlErrorCode.OrphanedLine));
@@ -273,7 +273,7 @@ public sealed class ValidationErrorTests
         // TAML spec: "A key with children (parent key) must not have a value on the same line."
         var source = "server\tlocalhost\n\tport\t8080";
 
-        var result = Taml.TokenizeStrict(source);
+        TamlParseResult result = Taml.TokenizeStrict(source);
 
         Assert.IsTrue(result.HasErrors);
         Assert.IsTrue(result.Errors.Any(e => e.Code == TamlErrorCode.ParentWithValue));
@@ -285,7 +285,7 @@ public sealed class ValidationErrorTests
         // Valid: Parent key without value followed by children
         var source = "server\n\thost\tlocalhost\n\tport\t8080";
 
-        var result = Taml.TokenizeStrict(source);
+        TamlParseResult result = Taml.TokenizeStrict(source);
 
         Assert.IsFalse(result.Errors.Any(e => e.Code == TamlErrorCode.ParentWithValue));
     }
@@ -296,7 +296,7 @@ public sealed class ValidationErrorTests
         // Valid: Key-value pairs without children don't create orphan errors
         var source = "name\tvalue\nother\tvalue2";
 
-        var result = Taml.TokenizeStrict(source);
+        TamlParseResult result = Taml.TokenizeStrict(source);
 
         Assert.IsFalse(result.Errors.Any(e => e.Code == TamlErrorCode.OrphanedLine));
     }
@@ -314,7 +314,7 @@ public sealed class ValidationErrorTests
             		retry	3
             """;
 
-        var result = Taml.TokenizeStrict(source);
+        TamlParseResult result = Taml.TokenizeStrict(source);
 
         Assert.IsFalse(result.Errors.Any(e =>
             e.Code == TamlErrorCode.OrphanedLine ||

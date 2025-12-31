@@ -18,7 +18,7 @@ public sealed class ListTests
             	third item
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -42,7 +42,7 @@ public sealed class ListTests
             	caching
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -62,7 +62,7 @@ public sealed class ListTests
             	rate-limiting
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -85,7 +85,7 @@ public sealed class ListTests
             		potato
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -105,7 +105,7 @@ public sealed class ListTests
             		cloud
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -125,7 +125,7 @@ public sealed class ListTests
             	Thank You
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -143,7 +143,7 @@ public sealed class ListTests
             next_key	value
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -162,7 +162,7 @@ public sealed class ListTests
             other	value
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -185,7 +185,7 @@ public sealed class ListTests
             		logging
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 

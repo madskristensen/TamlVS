@@ -3,8 +3,6 @@ using System.ComponentModel.Composition;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Language.StandardClassification;
-using Microsoft.VisualStudio.Text.BraceCompletion;
-using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
 using TamlTokenizer;
@@ -22,7 +20,9 @@ namespace TamlVS
             { TamlTokenType.Value, PredefinedClassificationTypeNames.String },
             { TamlTokenType.Tab, PredefinedClassificationTypeNames.WhiteSpace },
             { TamlTokenType.Newline, PredefinedClassificationTypeNames.WhiteSpace },
-            { TamlTokenType.Null, PredefinedClassificationTypeNames.Keyword },
+            { TamlTokenType.Null, PredefinedClassificationTypeNames.MarkupAttribute },
+            { TamlTokenType.Boolean, PredefinedClassificationTypeNames.MarkupAttribute },
+            { TamlTokenType.Number, PredefinedClassificationTypeNames.Number },
             { TamlTokenType.EmptyString, PredefinedClassificationTypeNames.String },
             { TamlTokenType.Comment, PredefinedClassificationTypeNames.Comment },
             { TamlTokenType.Indent, PredefinedClassificationTypeNames.WhiteSpace },
@@ -54,7 +54,7 @@ namespace TamlVS
     [ContentType(Constants.LanguageName)]
     internal sealed class CompletionCommitManager : CompletionCommitManagerBase
     {
-        public override IEnumerable<char> CommitChars => new[] { '\t', '\n' };
+        public override IEnumerable<char> CommitChars => ['\t', '\n'];
     }
 
     [Export(typeof(IViewTaggerProvider))]

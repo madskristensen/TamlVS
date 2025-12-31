@@ -41,9 +41,9 @@ public sealed class FormatterTests
         Assert.AreEqual(3, lines.Length);
 
         // Count tabs after key for each line
-        int tabs1 = CountTabsAfterKey(lines[0]);
-        int tabs2 = CountTabsAfterKey(lines[1]);
-        int tabs3 = CountTabsAfterKey(lines[2]);
+        var tabs1 = CountTabsAfterKey(lines[0]);
+        var tabs2 = CountTabsAfterKey(lines[1]);
+        var tabs3 = CountTabsAfterKey(lines[2]);
 
         // Shorter keys should have more tabs to align with longer key
         // ccc (3 chars) needs minimum tabs
@@ -54,9 +54,9 @@ public sealed class FormatterTests
 
     private static int CountTabsAfterKey(string line)
     {
-        int count = 0;
-        bool inKey = true;
-        foreach (char c in line)
+        var count = 0;
+        var inKey = true;
+        foreach (var c in line)
         {
             if (c == '\t')
             {
@@ -91,7 +91,7 @@ public sealed class FormatterTests
         Assert.IsTrue(formatted.Contains("database\n"));
 
         // Verify structure preserved
-        var result = Taml.Tokenize(formatted);
+        TamlParseResult result = Taml.Tokenize(formatted);
         Assert.IsTrue(result.IsSuccess);
     }
 
@@ -271,7 +271,7 @@ public sealed class FormatterTests
             """;
 
         var formatted = Taml.Format(source);
-        var result = Taml.Tokenize(formatted);
+        TamlParseResult result = Taml.Tokenize(formatted);
 
         Assert.IsTrue(result.IsSuccess, "Formatted output should be valid TAML");
     }
@@ -291,7 +291,7 @@ public sealed class FormatterTests
             """;
 
         var formatted = Taml.Format(source);
-        var result = Taml.Tokenize(formatted);
+        TamlParseResult result = Taml.Tokenize(formatted);
 
         Assert.IsTrue(result.IsSuccess);
         // Verify indentation preserved
@@ -318,7 +318,7 @@ public sealed class FormatterTests
             """;
 
         var formatted = Taml.Format(source);
-        var result = Taml.Tokenize(formatted);
+        TamlParseResult result = Taml.Tokenize(formatted);
 
         Assert.IsTrue(result.IsSuccess);
     }

@@ -16,8 +16,8 @@ public sealed class SyntaxHighlightingTests
             line3	value3
             """;
 
-        var result = Taml.Tokenize(source);
-        var line2Tokens = result.Tokens.GetTokensOnLine(2);
+        TamlParseResult result = Taml.Tokenize(source);
+        List<TamlToken> line2Tokens = result.Tokens.GetTokensOnLine(2);
 
         Assert.IsTrue(line2Tokens.Count > 0);
         Assert.IsTrue(line2Tokens.All(t => t.Line == 2));
@@ -33,8 +33,8 @@ public sealed class SyntaxHighlightingTests
             line4	value4
             """;
 
-        var result = Taml.Tokenize(source);
-        var rangeTokens = result.Tokens.GetTokensInRange(2, 3);
+        TamlParseResult result = Taml.Tokenize(source);
+        List<TamlToken> rangeTokens = result.Tokens.GetTokensInRange(2, 3);
 
         Assert.IsTrue(rangeTokens.Count > 0);
         Assert.IsTrue(rangeTokens.All(t => t.Line >= 2 && t.Line <= 3));
@@ -45,15 +45,15 @@ public sealed class SyntaxHighlightingTests
     {
         var source = "key\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         // Get token at key position
-        var keyToken = result.Tokens.GetTokenAt(1, 1);
+        TamlToken? keyToken = result.Tokens.GetTokenAt(1, 1);
         Assert.IsNotNull(keyToken);
         Assert.AreEqual(TamlTokenType.Key, keyToken.Type);
 
         // Get token at value position
-        var valueToken = result.Tokens.GetTokenAt(1, 5);
+        TamlToken? valueToken = result.Tokens.GetTokenAt(1, 5);
         Assert.IsNotNull(valueToken);
         Assert.AreEqual(TamlTokenType.Value, valueToken.Type);
     }
@@ -63,8 +63,8 @@ public sealed class SyntaxHighlightingTests
     {
         var source = "key\tvalue";
 
-        var result = Taml.Tokenize(source);
-        var token = result.Tokens.GetTokenAt(100, 100);
+        TamlParseResult result = Taml.Tokenize(source);
+        TamlToken? token = result.Tokens.GetTokenAt(100, 100);
 
         Assert.IsNull(token);
     }
@@ -79,12 +79,12 @@ public sealed class SyntaxHighlightingTests
             key3	value3
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
-        var keys = result.Tokens.GetTokensByType(TamlTokenType.Key);
+        List<TamlToken> keys = result.Tokens.GetTokensByType(TamlTokenType.Key);
         Assert.AreEqual(3, keys.Count);
 
-        var comments = result.Tokens.GetTokensByType(TamlTokenType.Comment);
+        List<TamlToken> comments = result.Tokens.GetTokensByType(TamlTokenType.Comment);
         Assert.AreEqual(1, comments.Count);
     }
 
@@ -97,8 +97,8 @@ public sealed class SyntaxHighlightingTests
             key3	value3
             """;
 
-        var result = Taml.Tokenize(source);
-        var keys = result.Tokens.GetKeys();
+        TamlParseResult result = Taml.Tokenize(source);
+        List<TamlToken> keys = result.Tokens.GetKeys();
 
         Assert.AreEqual(3, keys.Count);
         Assert.IsTrue(keys.All(k => k.Type == TamlTokenType.Key));
@@ -114,8 +114,8 @@ public sealed class SyntaxHighlightingTests
             key4	value4
             """;
 
-        var result = Taml.Tokenize(source);
-        var values = result.Tokens.GetValues();
+        TamlParseResult result = Taml.Tokenize(source);
+        List<TamlToken> values = result.Tokens.GetValues();
 
         Assert.AreEqual(4, values.Count);
         Assert.IsTrue(values.Any(v => v.Type == TamlTokenType.Value));
@@ -132,8 +132,8 @@ public sealed class SyntaxHighlightingTests
             # Comment 2
             """;
 
-        var result = Taml.Tokenize(source);
-        var comments = result.Tokens.GetComments();
+        TamlParseResult result = Taml.Tokenize(source);
+        List<TamlToken> comments = result.Tokens.GetComments();
 
         Assert.AreEqual(2, comments.Count);
         Assert.IsTrue(comments.All(c => c.Type == TamlTokenType.Comment));
@@ -144,12 +144,12 @@ public sealed class SyntaxHighlightingTests
     {
         var source = "key\t~";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
-        var nullToken = result.Tokens.First(t => t.Type == TamlTokenType.Null);
+        TamlToken nullToken = result.Tokens.First(t => t.Type == TamlTokenType.Null);
         Assert.IsTrue(nullToken.IsKeyword());
 
-        var keyToken = result.Tokens.First(t => t.Type == TamlTokenType.Key);
+        TamlToken keyToken = result.Tokens.First(t => t.Type == TamlTokenType.Key);
         Assert.IsFalse(keyToken.IsKeyword());
     }
 
@@ -158,15 +158,15 @@ public sealed class SyntaxHighlightingTests
     {
         var source = "key\tvalue\n\tchild\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
-        var tabToken = result.Tokens.First(t => t.Type == TamlTokenType.Tab);
+        TamlToken tabToken = result.Tokens.First(t => t.Type == TamlTokenType.Tab);
         Assert.IsTrue(tabToken.IsStructural());
 
-        var newlineToken = result.Tokens.First(t => t.Type == TamlTokenType.Newline);
+        TamlToken newlineToken = result.Tokens.First(t => t.Type == TamlTokenType.Newline);
         Assert.IsTrue(newlineToken.IsStructural());
 
-        var keyToken = result.Tokens.First(t => t.Type == TamlTokenType.Key);
+        TamlToken keyToken = result.Tokens.First(t => t.Type == TamlTokenType.Key);
         Assert.IsFalse(keyToken.IsStructural());
     }
 
@@ -179,18 +179,18 @@ public sealed class SyntaxHighlightingTests
             key3	""
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
-        var valueToken = result.Tokens.First(t => t.Type == TamlTokenType.Value);
+        TamlToken valueToken = result.Tokens.First(t => t.Type == TamlTokenType.Value);
         Assert.IsTrue(valueToken.IsValue());
 
-        var nullToken = result.Tokens.First(t => t.Type == TamlTokenType.Null);
+        TamlToken nullToken = result.Tokens.First(t => t.Type == TamlTokenType.Null);
         Assert.IsTrue(nullToken.IsValue());
 
-        var emptyToken = result.Tokens.First(t => t.Type == TamlTokenType.EmptyString);
+        TamlToken emptyToken = result.Tokens.First(t => t.Type == TamlTokenType.EmptyString);
         Assert.IsTrue(emptyToken.IsValue());
 
-        var keyToken = result.Tokens.First(t => t.Type == TamlTokenType.Key);
+        TamlToken keyToken = result.Tokens.First(t => t.Type == TamlTokenType.Key);
         Assert.IsFalse(keyToken.IsValue());
     }
 
@@ -199,12 +199,12 @@ public sealed class SyntaxHighlightingTests
     {
         var source = "valid\tvalue\n\t\t\tskipped";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         if (result.HasErrors)
         {
             var errorLine = result.Errors[0].Line;
-            var error = result.Errors.GetErrorOnLine(errorLine);
+            TamlError? error = result.Errors.GetErrorOnLine(errorLine);
             Assert.IsNotNull(error);
         }
     }
@@ -214,11 +214,11 @@ public sealed class SyntaxHighlightingTests
     {
         var source = "a\n\t\t\tb\nc\n\t\t\td"; // Errors on lines 2 and 4
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         if (result.HasErrors)
         {
-            var rangeErrors = result.Errors.GetErrorsInRange(1, 5);
+            List<TamlError> rangeErrors = result.Errors.GetErrorsInRange(1, 5);
             Assert.IsTrue(rangeErrors.Count > 0);
         }
     }
@@ -228,15 +228,15 @@ public sealed class SyntaxHighlightingTests
     {
         var source = "longkeyname\tlongvaluename";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         // Middle of key
-        var midKey = result.Tokens.GetTokenAt(1, 5);
+        TamlToken? midKey = result.Tokens.GetTokenAt(1, 5);
         Assert.IsNotNull(midKey);
         Assert.AreEqual(TamlTokenType.Key, midKey.Type);
 
         // Middle of value
-        var midValue = result.Tokens.GetTokenAt(1, 15);
+        TamlToken? midValue = result.Tokens.GetTokenAt(1, 15);
         Assert.IsNotNull(midValue);
         Assert.AreEqual(TamlTokenType.Value, midValue.Type);
     }
@@ -253,19 +253,19 @@ public sealed class SyntaxHighlightingTests
             # Footer
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         // Line 1 should have comment
-        var line1 = result.Tokens.GetTokensOnLine(1);
+        List<TamlToken> line1 = result.Tokens.GetTokensOnLine(1);
         Assert.IsTrue(line1.Any(t => t.Type == TamlTokenType.Comment));
 
         // Line 2 should have key and value
-        var line2 = result.Tokens.GetTokensOnLine(2);
+        List<TamlToken> line2 = result.Tokens.GetTokensOnLine(2);
         Assert.IsTrue(line2.Any(t => t.Type == TamlTokenType.Key));
         Assert.IsTrue(line2.Any(t => t.Type == TamlTokenType.Value));
 
         // Line 4 should have indented content
-        var line4 = result.Tokens.GetTokensOnLine(4);
+        List<TamlToken> line4 = result.Tokens.GetTokensOnLine(4);
         Assert.IsTrue(line4.Any(t => t.Type == TamlTokenType.Key && t.Value == "host"));
     }
 
@@ -274,10 +274,10 @@ public sealed class SyntaxHighlightingTests
     {
         var source = "key\tvalue\n\nother\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         // Line 2 is empty, should have minimal or no content tokens
-        var line2 = result.Tokens.GetTokensOnLine(2);
+        List<TamlToken> line2 = result.Tokens.GetTokensOnLine(2);
         Assert.IsTrue(line2.Count == 0 || line2.All(t =>
             t.Type == TamlTokenType.Newline ||
             t.Type == TamlTokenType.Whitespace));
@@ -288,9 +288,9 @@ public sealed class SyntaxHighlightingTests
     {
         var source = "key\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
-        foreach (var token in result.Tokens.Where(t => t.Type != TamlTokenType.EndOfFile))
+        foreach (TamlToken? token in result.Tokens.Where(t => t.Type != TamlTokenType.EndOfFile))
         {
             // Every token should have valid position info for IDE highlighting
             Assert.IsTrue(token.Line > 0);

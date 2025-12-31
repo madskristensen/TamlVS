@@ -67,7 +67,7 @@ public sealed class TamlError
     /// </summary>
     public override string ToString()
     {
-        string codePrefix = !string.IsNullOrEmpty(Code) ? $"[{Code}] " : "";
+        var codePrefix = !string.IsNullOrEmpty(Code) ? $"[{Code}] " : "";
         return $"{codePrefix}{Message} (line {Line}, column {Column}, position {Position}, length {Length})";
     }
 }

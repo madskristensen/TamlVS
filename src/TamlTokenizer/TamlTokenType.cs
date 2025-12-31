@@ -43,5 +43,11 @@ public enum TamlTokenType
     EndOfFile,
 
     /// <summary>Invalid or unrecognized token.</summary>
-    Invalid
+    Invalid,
+
+    /// <summary>A boolean value (true or false).</summary>
+    Boolean,
+
+    /// <summary>A numeric value (integer or decimal).</summary>
+    Number
 }

@@ -51,7 +51,7 @@ public static class Taml
 
         options ??= TamlParserOptions.Default;
         var lexer = new TamlLexer(source, options);
-        var tokens = lexer.Tokenize();
+        List<TamlToken> tokens = lexer.Tokenize();
         var errors = new List<TamlError>(lexer.Errors);
 
         // Perform structural validation in strict mode
@@ -87,7 +87,7 @@ public static class Taml
 
         for (var i = 0; i < tokens.Count; i++)
         {
-            var token = tokens[i];
+            TamlToken token = tokens[i];
 
             switch (token.Type)
             {
@@ -106,7 +106,7 @@ public static class Taml
                     // Check for parent-with-value: a key with a value now has children
                     // Find the parent key at previousLineIndentLevel
                     var parentKeyLookup = MakeKey(token.Line - 1, previousLineIndentLevel);
-                    if (keysWithValues.TryGetValue(parentKeyLookup, out var parentKey))
+                    if (keysWithValues.TryGetValue(parentKeyLookup, out TamlToken? parentKey))
                     {
                         errors.Add(new TamlError(
                             "Key '" + parentKey.Value + "' has a value but also has children",
@@ -133,13 +133,13 @@ public static class Taml
                     // Check if this key is followed by a value (tab then value)
                     for (var j = i + 1; j < tokens.Count; j++)
                     {
-                        var nextToken = tokens[j];
+                        TamlToken nextToken = tokens[j];
                         if (nextToken.Type == TamlTokenType.Tab)
                         {
                             // Look for value after tab
                             for (var k = j + 1; k < tokens.Count; k++)
                             {
-                                var valueToken = tokens[k];
+                                TamlToken valueToken = tokens[k];
                                 if (valueToken.Type == TamlTokenType.Value ||
                                     valueToken.Type == TamlTokenType.Null ||
                                     valueToken.Type == TamlTokenType.EmptyString)
@@ -219,7 +219,7 @@ public static class Taml
     /// <exception cref="ArgumentNullException">source is null.</exception>
     public static IReadOnlyList<TamlError> Validate(string source)
     {
-        var result = TokenizeStrict(source);
+        TamlParseResult result = TokenizeStrict(source);
         return result.Errors;
     }
 

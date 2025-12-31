@@ -17,7 +17,7 @@ namespace TamlTokenizer;
 public sealed class TamlLexer
 {
     // Cached tab strings to avoid allocations for common cases
-    private static readonly string[] CachedTabs = { "", "\t", "\t\t", "\t\t\t", "\t\t\t\t" };
+    private static readonly string[] _cachedTabs = ["", "\t", "\t\t", "\t\t\t", "\t\t\t\t"];
 
     private readonly string _source;
     private readonly TamlParserOptions _options;
@@ -50,7 +50,7 @@ public sealed class TamlLexer
     {
         _source = source ?? throw new ArgumentNullException(nameof(source));
         _options = options ?? TamlParserOptions.Default;
-        _errors = new List<TamlError>();
+        _errors = [];
         _indentStack = new Stack<int>();
         _indentStack.Push(0);
         _pendingTokens = new Queue<TamlToken>();
@@ -80,10 +80,10 @@ public sealed class TamlLexer
             _errors.Add(new TamlError(
                 $"Input size ({_source.Length:N0} characters) exceeds maximum allowed ({_options.MaxInputSize:N0}).",
                 0, 0, 1, 1, TamlErrorCode.InputSizeExceeded));
-            return new List<TamlToken>
-            {
-                new TamlToken(TamlTokenType.EndOfFile, string.Empty, 1, 1, 0, 0)
-            };
+            return
+            [
+                new(TamlTokenType.EndOfFile, string.Empty, 1, 1, 0, 0)
+            ];
         }
 
         // Pre-allocate capacity: rough estimate of 1 token per 5 characters
@@ -134,7 +134,7 @@ public sealed class TamlLexer
             return CreateToken(TamlTokenType.EndOfFile, string.Empty);
         }
 
-        char current = Current;
+        var current = Current;
 
         // Handle line start (indentation processing)
         if (_atLineStart)
@@ -185,16 +185,16 @@ public sealed class TamlLexer
 
     private TamlToken ProcessLineStart()
     {
-        int startPos = _position;
-        int startColumn = _column;
-        int tabCount = 0;
-        bool hasSpaces = false;
-        bool hasMixedIndentation = false;
+        var startPos = _position;
+        var startColumn = _column;
+        var tabCount = 0;
+        var hasSpaces = false;
+        var hasMixedIndentation = false;
 
         // Count leading tabs and check for spaces
         while (_position < _source.Length)
         {
-            char c = Current;
+            var c = Current;
             if (c == '\t')
             {
                 if (hasSpaces)
@@ -256,7 +256,7 @@ public sealed class TamlLexer
         }
 
         // Process indentation changes
-        var indentToken = ProcessIndentChange(tabCount, startPos, startColumn);
+        TamlToken? indentToken = ProcessIndentChange(tabCount, startPos, startColumn);
         if (indentToken != null)
         {
             return indentToken;
@@ -268,7 +268,7 @@ public sealed class TamlLexer
 
     private TamlToken? ProcessIndentChange(int newIndentLevel, int startPos, int startColumn)
     {
-        int currentLevel = _indentStack.Peek();
+        var currentLevel = _indentStack.Peek();
 
         if (newIndentLevel > currentLevel)
         {
@@ -319,9 +319,9 @@ public sealed class TamlLexer
 
     private TamlToken ConsumeNewline()
     {
-        int start = _position;
-        int startColumn = _column;
-        int startLine = _line;
+        var start = _position;
+        var startColumn = _column;
+        var startLine = _line;
 
         if (Current == '\r' && Peek() == '\n')
         {
@@ -351,8 +351,8 @@ public sealed class TamlLexer
 
     private TamlToken ConsumeComment()
     {
-        int start = _position;
-        int startColumn = _column;
+        var start = _position;
+        var startColumn = _column;
 
         // Skip the # character
         _position++;
@@ -365,15 +365,15 @@ public sealed class TamlLexer
             _column++;
         }
 
-        string value = _source.Substring(start, _position - start);
+        var value = _source.Substring(start, _position - start);
         return new TamlToken(TamlTokenType.Comment, value, _line, startColumn, start, value.Length);
     }
 
     private TamlToken ConsumeTab()
     {
-        int start = _position;
-        int startColumn = _column;
-        int tabCount = 0;
+        var start = _position;
+        var startColumn = _column;
+        var tabCount = 0;
 
         while (_position < _source.Length && Current == '\t')
         {
@@ -387,14 +387,14 @@ public sealed class TamlLexer
         _afterTabSeparator = true;
 
         // Use cached tab strings for common cases to avoid allocations
-        string tabValue = tabCount < CachedTabs.Length ? CachedTabs[tabCount] : new string('\t', tabCount);
+        var tabValue = tabCount < _cachedTabs.Length ? _cachedTabs[tabCount] : new string('\t', tabCount);
         return new TamlToken(TamlTokenType.Tab, tabValue, _line, startColumn, start, tabCount);
     }
 
     private TamlToken ConsumeSpace()
     {
-        int start = _position;
-        int startColumn = _column;
+        var start = _position;
+        var startColumn = _column;
 
         while (_position < _source.Length && Current == ' ')
         {
@@ -402,14 +402,14 @@ public sealed class TamlLexer
             _column++;
         }
 
-        string value = _source.Substring(start, _position - start);
+        var value = _source.Substring(start, _position - start);
         return new TamlToken(TamlTokenType.Whitespace, value, _line, startColumn, start, value.Length);
     }
 
     private TamlToken ConsumeNull()
     {
-        int start = _position;
-        int startColumn = _column;
+        var start = _position;
+        var startColumn = _column;
 
         _position++;
         _column++;
@@ -419,8 +419,8 @@ public sealed class TamlLexer
 
     private TamlToken ConsumeEmptyString()
     {
-        int start = _position;
-        int startColumn = _column;
+        var start = _position;
+        var startColumn = _column;
 
         _position += 2;
         _column += 2;
@@ -430,17 +430,17 @@ public sealed class TamlLexer
 
     private TamlToken ConsumeText()
     {
-        int start = _position;
-        int startColumn = _column;
+        var start = _position;
+        var startColumn = _column;
 
         // Scan forward to find end of text (tab, newline, or end of source)
         // This avoids StringBuilder allocation by using Substring
-        int maxEnd = Math.Min(_source.Length, start + _options.MaxStringLength + 1);
-        int end = start;
+        var maxEnd = Math.Min(_source.Length, start + _options.MaxStringLength + 1);
+        var end = start;
 
         while (end < _source.Length)
         {
-            char c = _source[end];
+            var c = _source[end];
 
             // Stop at tab, newline, or end
             if (c == '\t' || c == '\n' || c == '\r')
@@ -461,16 +461,16 @@ public sealed class TamlLexer
             }
         }
 
-        int length = end - start;
+        var length = end - start;
         _position = end;
         _column = startColumn + length;
 
-        string value = _source.Substring(start, length);
+        var value = _source.Substring(start, length);
 
         // Determine if this is a key or value based on context
         // A key is followed by tab(s) OR is at the start of a line (parent key or list item)
         // A value is after a tab separator
-        bool isKey = _position < _source.Length && _source[_position] == '\t';
+        var isKey = _position < _source.Length && _source[_position] == '\t';
 
         // Also consider it a key if it's at the start position of a line (after indentation)
         // This handles parent keys and list items which don't have tab-separated values
@@ -479,7 +479,16 @@ public sealed class TamlLexer
             isKey = true;
         }
 
-        TamlTokenType type = isKey ? TamlTokenType.Key : TamlTokenType.Value;
+        TamlTokenType type;
+        if (isKey)
+        {
+            type = TamlTokenType.Key;
+        }
+        else
+        {
+            // Classify the value type for syntax highlighting
+            type = ClassifyValueType(value);
+        }
 
         return new TamlToken(type, value, _line, startColumn, start, length);
     }
@@ -489,15 +498,75 @@ public sealed class TamlLexer
         return new TamlToken(type, value, _line, _column, _position, value.Length);
     }
 
+    /// <summary>
+    /// Classifies a value string into its specific type (Boolean, Number, or Value).
+    /// </summary>
+    private static TamlTokenType ClassifyValueType(string value)
+    {
+        // Check for boolean
+        if (value == "true" || value == "false")
+        {
+            return TamlTokenType.Boolean;
+        }
+
+        // Check for number (integer or decimal)
+        if (value.Length > 0 && IsNumeric(value))
+        {
+            return TamlTokenType.Number;
+        }
+
+        return TamlTokenType.Value;
+    }
+
+    /// <summary>
+    /// Checks if the string represents a valid number (integer or decimal).
+    /// </summary>
+    private static bool IsNumeric(string value)
+    {
+        var startIndex = 0;
+        var hasDecimalPoint = false;
+
+        // Handle optional leading sign
+        if (value[0] == '-' || value[0] == '+')
+        {
+            startIndex = 1;
+            if (value.Length == 1)
+            {
+                return false;
+            }
+        }
+
+        for (var i = startIndex; i < value.Length; i++)
+        {
+            var c = value[i];
+
+            if (c == '.')
+            {
+                if (hasDecimalPoint)
+                {
+                    return false; // Multiple decimal points
+                }
+                hasDecimalPoint = true;
+            }
+            else if (c < '0' || c > '9')
+            {
+                return false;
+            }
+        }
+
+        // Ensure there's at least one digit
+        return value.Length > startIndex && (value.Length > startIndex + (hasDecimalPoint ? 1 : 0));
+    }
+
     private char Current => _position < _source.Length ? _source[_position] : '\0';
 
     private char Peek(int offset = 1)
     {
-        int pos = _position + offset;
+        var pos = _position + offset;
         return pos < _source.Length ? _source[pos] : '\0';
     }
 
-    private bool IsValueTerminator(char c)
+    private static bool IsValueTerminator(char c)
     {
         return c == '\0' || c == '\t' || c == '\n' || c == '\r' || c == '#';
     }

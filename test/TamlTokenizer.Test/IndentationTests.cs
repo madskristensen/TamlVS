@@ -13,7 +13,7 @@ public sealed class IndentationTests
         // TAML spec: "Children are indented with tabs"
         var source = "parent\n\tchild\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsTrue(result.Tokens.Any(t => t.Type == TamlTokenType.Indent));
@@ -24,7 +24,7 @@ public sealed class IndentationTests
     {
         var source = "parent\n\tchild\tvalue\nsibling\tvalue2";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsTrue(result.Tokens.Any(t => t.Type == TamlTokenType.Dedent));
@@ -40,7 +40,7 @@ public sealed class IndentationTests
             			level3	value
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -58,7 +58,7 @@ public sealed class IndentationTests
             back_at_root	value
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -79,7 +79,7 @@ public sealed class IndentationTests
             		deeper	value
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -106,7 +106,7 @@ public sealed class IndentationTests
             			password	secret
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -128,7 +128,7 @@ public sealed class IndentationTests
     {
         var source = "root\n\tchild\n\t\tgrandchild\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -146,7 +146,7 @@ public sealed class IndentationTests
             key3	value3
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -169,7 +169,7 @@ public sealed class IndentationTests
             	third item
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -192,7 +192,7 @@ public sealed class IndentationTests
             		log_level	error
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -210,17 +210,17 @@ public sealed class IndentationTests
             	port	8080
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
         // "server" should be a key with no value on same line
-        var serverKey = result.Tokens.First(t => t.Type == TamlTokenType.Key);
+        TamlToken serverKey = result.Tokens.First(t => t.Type == TamlTokenType.Key);
         Assert.AreEqual("server", serverKey.Value);
 
         // Next non-whitespace should be newline, then indent, then child key
-        int serverIndex = result.Tokens.ToList().IndexOf(serverKey);
-        var afterServer = result.Tokens.Skip(serverIndex + 1)
+        var serverIndex = result.Tokens.ToList().IndexOf(serverKey);
+        TamlToken afterServer = result.Tokens.Skip(serverIndex + 1)
             .Where(t => t.Type != TamlTokenType.Whitespace)
             .First();
         Assert.AreEqual(TamlTokenType.Newline, afterServer.Type);
@@ -237,7 +237,7 @@ public sealed class IndentationTests
             				e	value
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -255,7 +255,7 @@ public sealed class IndentationTests
             	back_to_level1	value
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 

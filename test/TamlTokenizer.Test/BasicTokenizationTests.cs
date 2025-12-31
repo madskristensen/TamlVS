@@ -14,7 +14,7 @@ public sealed class BasicTokenizationTests
         var source = "key\tvalue";
 
         // Act
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         // Assert
         Assert.IsTrue(result.IsSuccess);
@@ -37,7 +37,7 @@ public sealed class BasicTokenizationTests
         // TAML spec: "Multiple tabs can be used for visual alignment"
         var source = "key\t\t\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual(TamlTokenType.Key, result.Tokens[0].Type);
@@ -51,7 +51,7 @@ public sealed class BasicTokenizationTests
     {
         var source = "name\tvalue\nage\t42";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
@@ -60,10 +60,12 @@ public sealed class BasicTokenizationTests
         Assert.AreEqual("name", keys[0].Value);
         Assert.AreEqual("age", keys[1].Value);
 
-        var values = result.Tokens.Where(t => t.Type == TamlTokenType.Value).ToList();
-        Assert.AreEqual(2, values.Count);
-        Assert.AreEqual("value", values[0].Value);
-        Assert.AreEqual("42", values[1].Value);
+        // "value" is a string Value, "42" is a Number
+        TamlToken stringValue = result.Tokens.First(t => t.Type == TamlTokenType.Value);
+        Assert.AreEqual("value", stringValue.Value);
+
+        TamlToken numberValue = result.Tokens.First(t => t.Type == TamlTokenType.Number);
+        Assert.AreEqual("42", numberValue.Value);
     }
 
     [TestMethod]
@@ -72,10 +74,10 @@ public sealed class BasicTokenizationTests
         // TAML spec: Values are literal strings
         var source = "message\tHello World";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
-        var value = result.Tokens.First(t => t.Type == TamlTokenType.Value);
+        TamlToken value = result.Tokens.First(t => t.Type == TamlTokenType.Value);
         Assert.AreEqual("Hello World", value.Value);
     }
 
@@ -84,25 +86,87 @@ public sealed class BasicTokenizationTests
     {
         var source = "port\t8080";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
-        var value = result.Tokens.First(t => t.Type == TamlTokenType.Value);
+        TamlToken value = result.Tokens.First(t => t.Type == TamlTokenType.Number);
         Assert.AreEqual("8080", value.Value);
     }
 
     [TestMethod]
-    public void WhenValueContainsBooleanThenPreservedAsString()
+    public void WhenValueContainsBooleanThenClassifiedAsBoolean()
     {
-        // TAML spec: "All values are strings by default"
+        // Boolean values are now classified as Boolean type for syntax highlighting
         var source = "ssl\ttrue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
-        var value = result.Tokens.First(t => t.Type == TamlTokenType.Value);
+        TamlToken value = result.Tokens.First(t => t.Type == TamlTokenType.Boolean);
         Assert.AreEqual("true", value.Value);
-        Assert.AreEqual(TamlTokenType.Value, value.Type); // Not a special Boolean type
+        Assert.AreEqual(TamlTokenType.Boolean, value.Type);
+    }
+
+    [TestMethod]
+    public void WhenValueIsFalseThenClassifiedAsBoolean()
+    {
+        var source = "enabled\tfalse";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.IsSuccess);
+        TamlToken value = result.Tokens.First(t => t.Type == TamlTokenType.Boolean);
+        Assert.AreEqual("false", value.Value);
+    }
+
+    [TestMethod]
+    public void WhenValueIsDecimalNumberThenClassifiedAsNumber()
+    {
+        var source = "price\t19.99";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.IsSuccess);
+        TamlToken value = result.Tokens.First(t => t.Type == TamlTokenType.Number);
+        Assert.AreEqual("19.99", value.Value);
+    }
+
+    [TestMethod]
+    public void WhenValueIsNegativeNumberThenClassifiedAsNumber()
+    {
+        var source = "offset\t-42";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.IsSuccess);
+        TamlToken value = result.Tokens.First(t => t.Type == TamlTokenType.Number);
+        Assert.AreEqual("-42", value.Value);
+    }
+
+    [TestMethod]
+    public void WhenValueLooksLikeBooleanButIsNotThenClassifiedAsValue()
+    {
+        // "TRUE" (uppercase) should remain a Value, not Boolean
+        var source = "mode\tTRUE";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.IsSuccess);
+        TamlToken value = result.Tokens.First(t => t.Type == TamlTokenType.Value);
+        Assert.AreEqual("TRUE", value.Value);
+    }
+
+    [TestMethod]
+    public void WhenValueStartsWithNumberButIsNotNumericThenClassifiedAsValue()
+    {
+        // "123abc" is not a valid number
+        var source = "id\t123abc";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.IsSuccess);
+        TamlToken value = result.Tokens.First(t => t.Type == TamlTokenType.Value);
+        Assert.AreEqual("123abc", value.Value);
     }
 
     [TestMethod]
@@ -111,19 +175,19 @@ public sealed class BasicTokenizationTests
         // TAML spec: "Keys with children have no value (just the key alone on the line)"
         var source = "server\n\thost\tlocalhost";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 
         // First line: just "server" as a key with no value
-        var firstKey = result.Tokens.First(t => t.Type == TamlTokenType.Key);
+        TamlToken firstKey = result.Tokens.First(t => t.Type == TamlTokenType.Key);
         Assert.AreEqual("server", firstKey.Value);
     }
 
     [TestMethod]
     public void WhenEmptyInputThenReturnsOnlyEof()
     {
-        var result = Taml.Tokenize("");
+        TamlParseResult result = Taml.Tokenize("");
 
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual(1, result.Tokens.Count);
@@ -135,7 +199,7 @@ public sealed class BasicTokenizationTests
     {
         var source = "key1\tvalue1\n\nkey2\tvalue2";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         var keys = result.Tokens.Where(t => t.Type == TamlTokenType.Key).ToList();
@@ -148,7 +212,7 @@ public sealed class BasicTokenizationTests
         // TAML spec example shows "user-authentication" as a value
         var source = "my-key\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual("my-key", result.Tokens[0].Value);
@@ -159,7 +223,7 @@ public sealed class BasicTokenizationTests
     {
         var source = "my_key\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual("my_key", result.Tokens[0].Value);
@@ -170,7 +234,7 @@ public sealed class BasicTokenizationTests
     {
         var source = "key1\tvalue1\r\nkey2\tvalue2";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         var keys = result.Tokens.Where(t => t.Type == TamlTokenType.Key).ToList();
@@ -182,20 +246,20 @@ public sealed class BasicTokenizationTests
     {
         var source = "key\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
-        var keyToken = result.Tokens[0];
+        TamlToken keyToken = result.Tokens[0];
         Assert.AreEqual(1, keyToken.Line);
         Assert.AreEqual(1, keyToken.Column);
         Assert.AreEqual(0, keyToken.Position);
         Assert.AreEqual(3, keyToken.Length);
 
-        var tabToken = result.Tokens[1];
+        TamlToken tabToken = result.Tokens[1];
         Assert.AreEqual(1, tabToken.Line);
         Assert.AreEqual(4, tabToken.Column);
         Assert.AreEqual(3, tabToken.Position);
 
-        var valueToken = result.Tokens[2];
+        TamlToken valueToken = result.Tokens[2];
         Assert.AreEqual(1, valueToken.Line);
         Assert.AreEqual(5, valueToken.Column);
         Assert.AreEqual(4, valueToken.Position);
@@ -206,7 +270,7 @@ public sealed class BasicTokenizationTests
     {
         var source = "line1\tvalue1\nline2\tvalue2\nline3\tvalue3";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         var keys = result.Tokens.Where(t => t.Type == TamlTokenType.Key).ToList();
         Assert.AreEqual(1, keys[0].Line);
@@ -224,7 +288,7 @@ public sealed class BasicTokenizationTests
             author	Developer Name
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
 

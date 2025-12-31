@@ -5,56 +5,46 @@ namespace TamlTokenizer;
 /// <summary>
 /// Represents a single token in the TAML language with position tracking.
 /// </summary>
-public sealed class TamlToken : IEquatable<TamlToken>
+/// <remarks>
+/// Creates a new TAML token.
+/// </remarks>
+/// <param name="type">The token type.</param>
+/// <param name="value">The raw text value.</param>
+/// <param name="line">The 1-based line number.</param>
+/// <param name="column">The 1-based column number.</param>
+/// <param name="position">The 0-based absolute character position.</param>
+/// <param name="length">The length in characters.</param>
+public sealed class TamlToken(TamlTokenType type, string value, int line, int column, int position, int length) : IEquatable<TamlToken>
 {
     /// <summary>
     /// The type of this token.
     /// </summary>
-    public TamlTokenType Type { get; }
+    public TamlTokenType Type { get; } = type;
 
     /// <summary>
     /// The raw text value of this token.
     /// </summary>
-    public string Value { get; }
+    public string Value { get; } = value ?? string.Empty;
 
     /// <summary>
     /// The line number where this token starts (1-based).
     /// </summary>
-    public int Line { get; }
+    public int Line { get; } = line;
 
     /// <summary>
     /// The column number where this token starts (1-based).
     /// </summary>
-    public int Column { get; }
+    public int Column { get; } = column;
 
     /// <summary>
     /// The absolute character position in the source text (0-based).
     /// </summary>
-    public int Position { get; }
+    public int Position { get; } = position;
 
     /// <summary>
     /// The length of this token in characters.
     /// </summary>
-    public int Length { get; }
-
-    /// <summary>
-    /// Creates a new TAML token.
-    /// </summary>
-    /// <param name="type">The token type.</param>
-    /// <param name="value">The raw text value.</param>
-    /// <param name="line">The 1-based line number.</param>
-    /// <param name="column">The 1-based column number.</param>
-    /// <param name="position">The 0-based absolute character position.</param>
-    /// <param name="length">The length in characters.</param>
-    public TamlToken(TamlTokenType type, string value, int line, int column, int position, int length)
-    {
-        Type = type;
-        Value = value ?? string.Empty;
-        Line = line;
-        Column = column;
-        Position = position;
-        Length = length;
-    }
+    public int Length { get; } = length;
 
     /// <summary>
     /// Gets the end position of this token (exclusive).
@@ -62,10 +52,12 @@ public sealed class TamlToken : IEquatable<TamlToken>
     public int EndPosition => Position + Length;
 
     /// <summary>
-    /// Determines if this token is a value type (Key, Value, Null, EmptyString).
+    /// Determines if this token is a value type (Key, Value, Boolean, Number, Null, EmptyString).
     /// </summary>
     public bool IsValueToken => Type == TamlTokenType.Key ||
                                  Type == TamlTokenType.Value ||
+                                 Type == TamlTokenType.Boolean ||
+                                 Type == TamlTokenType.Number ||
                                  Type == TamlTokenType.Null ||
                                  Type == TamlTokenType.EmptyString;
 
@@ -106,7 +98,7 @@ public sealed class TamlToken : IEquatable<TamlToken>
     {
         unchecked
         {
-            int hash = 17;
+            var hash = 17;
             hash = hash * 31 + Type.GetHashCode();
             hash = hash * 31 + (Value?.GetHashCode() ?? 0);
             hash = hash * 31 + Line.GetHashCode();

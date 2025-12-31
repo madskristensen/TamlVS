@@ -12,10 +12,10 @@ public sealed class CommentTests
     {
         var source = "# This is a comment";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
-        var comment = result.Tokens.First(t => t.Type == TamlTokenType.Comment);
+        TamlToken comment = result.Tokens.First(t => t.Type == TamlTokenType.Comment);
         Assert.AreEqual("# This is a comment", comment.Value);
     }
 
@@ -27,7 +27,7 @@ public sealed class CommentTests
             key	value
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsTrue(result.Tokens.Any(t => t.Type == TamlTokenType.Comment));
@@ -45,7 +45,7 @@ public sealed class CommentTests
             # Comment 3
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         var comments = result.Tokens.Where(t => t.Type == TamlTokenType.Comment).ToList();
@@ -58,10 +58,10 @@ public sealed class CommentTests
         // TAML spec: "# characters within keys or values are treated as literal characters"
         var source = "color\t#FF0000";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
-        var value = result.Tokens.First(t => t.Type == TamlTokenType.Value);
+        TamlToken value = result.Tokens.First(t => t.Type == TamlTokenType.Value);
         Assert.AreEqual("#FF0000", value.Value);
     }
 
@@ -71,10 +71,10 @@ public sealed class CommentTests
         // TAML spec: "# characters within keys or values are treated as literal characters"
         var source = "key#1\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
-        var key = result.Tokens.First(t => t.Type == TamlTokenType.Key);
+        TamlToken key = result.Tokens.First(t => t.Type == TamlTokenType.Key);
         Assert.AreEqual("key#1", key.Value);
     }
 
@@ -86,10 +86,10 @@ public sealed class CommentTests
             # Final comment
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
-        var comment = result.Tokens.First(t => t.Type == TamlTokenType.Comment);
+        TamlToken comment = result.Tokens.First(t => t.Type == TamlTokenType.Comment);
         Assert.IsTrue(comment.Value.Contains("Final comment"));
     }
 
@@ -98,10 +98,10 @@ public sealed class CommentTests
     {
         var source = "# TAML Example";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
-        var comment = result.Tokens.First(t => t.Type == TamlTokenType.Comment);
+        TamlToken comment = result.Tokens.First(t => t.Type == TamlTokenType.Comment);
         Assert.AreEqual("# TAML Example", comment.Value);
     }
 
@@ -114,10 +114,10 @@ public sealed class CommentTests
             	child	value
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
-        var comment = result.Tokens.FirstOrDefault(t => t.Type == TamlTokenType.Comment);
+        TamlToken? comment = result.Tokens.FirstOrDefault(t => t.Type == TamlTokenType.Comment);
         Assert.IsNotNull(comment);
     }
 
@@ -130,7 +130,7 @@ public sealed class CommentTests
             application	MyApp
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsTrue(result.Tokens.Any(t => t.Type == TamlTokenType.Comment));
@@ -142,10 +142,10 @@ public sealed class CommentTests
     {
         var source = "# Comment\nkey\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
-        var comment = result.Tokens.First(t => t.Type == TamlTokenType.Comment);
+        TamlToken comment = result.Tokens.First(t => t.Type == TamlTokenType.Comment);
         Assert.AreEqual(1, comment.Line);
         Assert.AreEqual(1, comment.Column);
     }
@@ -155,10 +155,10 @@ public sealed class CommentTests
     {
         var source = "#\nkey\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
-        var comment = result.Tokens.First(t => t.Type == TamlTokenType.Comment);
+        TamlToken comment = result.Tokens.First(t => t.Type == TamlTokenType.Comment);
         Assert.AreEqual("#", comment.Value);
     }
 
@@ -171,7 +171,7 @@ public sealed class CommentTests
             # Line 3
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         var comments = result.Tokens.Where(t => t.Type == TamlTokenType.Comment).ToList();
@@ -183,10 +183,10 @@ public sealed class CommentTests
     {
         var source = "# Special chars: !@#$%^&*()";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
-        var comment = result.Tokens.First(t => t.Type == TamlTokenType.Comment);
+        TamlToken comment = result.Tokens.First(t => t.Type == TamlTokenType.Comment);
         Assert.IsTrue(comment.Value.Contains("!@#$%^&*()"));
     }
 
@@ -201,7 +201,7 @@ public sealed class CommentTests
             	port	8080
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         var comments = result.Tokens.Where(t => t.Type == TamlTokenType.Comment).ToList();

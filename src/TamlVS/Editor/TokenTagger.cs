@@ -182,6 +182,8 @@ namespace TamlVS
             return type == TamlTokenType.Key ||
                    type == TamlTokenType.Value ||
                    type == TamlTokenType.Null ||
+                   type == TamlTokenType.Boolean ||
+                   type == TamlTokenType.Number ||
                    type == TamlTokenType.EmptyString ||
                    type == TamlTokenType.Comment;
         }

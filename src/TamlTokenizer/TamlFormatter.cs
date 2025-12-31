@@ -49,7 +49,7 @@ public sealed class TamlFormatter
             return _options.EnsureTrailingNewline ? "\n" : string.Empty;
 
         // Parse into lines with structure info
-        var lines = ParseLines(source);
+        List<TamlLine> lines = ParseLines(source);
 
         // Calculate alignment for each indentation level
         if (_options.AlignValues)
@@ -63,7 +63,7 @@ public sealed class TamlFormatter
 
     private List<TamlLine> ParseLines(string source)
     {
-        var rawLines = source.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
+        var rawLines = source.Split(["\r\n", "\n", "\r"], StringSplitOptions.None);
         // Pre-allocate list capacity
         var lines = new List<TamlLine>(rawLines.Length);
 
@@ -85,7 +85,7 @@ public sealed class TamlFormatter
             return result;
         }
 
-        int pos = 0;
+        var pos = 0;
 
         // Count leading tabs (indentation)
         while (pos < line.Length && line[pos] == '\t')
@@ -95,7 +95,7 @@ public sealed class TamlFormatter
         }
 
         // Count leading spaces and convert to tabs (4 spaces = 1 tab level)
-        int spaceCount = 0;
+        var spaceCount = 0;
         while (pos < line.Length && line[pos] == ' ')
         {
             spaceCount++;
@@ -118,7 +118,7 @@ public sealed class TamlFormatter
         }
 
         // Parse key
-        int keyStart = pos;
+        var keyStart = pos;
         while (pos < line.Length && line[pos] != '\t')
         {
             pos++;
@@ -154,14 +154,14 @@ public sealed class TamlFormatter
         // All lines at the same indent level get aligned together
         var levelGroups = new Dictionary<int, List<TamlLine>>();
 
-        foreach (var line in lines)
+        foreach (TamlLine line in lines)
         {
             if (line.IsBlank || line.IsComment || !line.HasValue)
                 continue;
 
-            if (!levelGroups.TryGetValue(line.IndentLevel, out var group))
+            if (!levelGroups.TryGetValue(line.IndentLevel, out List<TamlLine>? group))
             {
-                group = new List<TamlLine>();
+                group = [];
                 levelGroups[line.IndentLevel] = group;
             }
 
@@ -169,12 +169,12 @@ public sealed class TamlFormatter
         }
 
         // Calculate max key length for each indent level and set alignment
-        foreach (var kvp in levelGroups)
+        foreach (KeyValuePair<int, List<TamlLine>> kvp in levelGroups)
         {
-            var group = kvp.Value;
-            int maxKeyLength = 0;
+            List<TamlLine> group = kvp.Value;
+            var maxKeyLength = 0;
 
-            foreach (var line in group)
+            foreach (TamlLine line in group)
             {
                 if (!string.IsNullOrEmpty(line.Key))
                 {
@@ -183,7 +183,7 @@ public sealed class TamlFormatter
             }
 
             // Set alignment column for all lines in group
-            foreach (var line in group)
+            foreach (TamlLine line in group)
             {
                 line.AlignmentColumn = maxKeyLength;
             }
@@ -195,17 +195,17 @@ public sealed class TamlFormatter
         var sb = new StringBuilder();
 
         // Remove trailing blank lines from input
-        int lastContentIndex = lines.Count - 1;
+        var lastContentIndex = lines.Count - 1;
         while (lastContentIndex >= 0 && lines[lastContentIndex].IsBlank)
         {
             lastContentIndex--;
         }
 
-        bool lastWasBlank = false;
+        var lastWasBlank = false;
 
-        for (int i = 0; i <= lastContentIndex; i++)
+        for (var i = 0; i <= lastContentIndex; i++)
         {
-            var line = lines[i];
+            TamlLine line = lines[i];
 
             // Handle blank lines
             if (line.IsBlank)
@@ -222,7 +222,7 @@ public sealed class TamlFormatter
 
             // Build the line
             // Add indentation
-            for (int t = 0; t < line.IndentLevel; t++)
+            for (var t = 0; t < line.IndentLevel; t++)
             {
                 sb.Append('\t');
             }
@@ -238,10 +238,10 @@ public sealed class TamlFormatter
                 if (line.HasValue)
                 {
                     // Calculate tabs needed for alignment
-                    int tabsNeeded = CalculateTabsForAlignment(line.Key!.Length, line.AlignmentColumn);
+                    var tabsNeeded = CalculateTabsForAlignment(line.Key!.Length, line.AlignmentColumn);
                     tabsNeeded = Math.Max(tabsNeeded, _options.MinTabsBetweenKeyAndValue);
 
-                    for (int t = 0; t < tabsNeeded; t++)
+                    for (var t = 0; t < tabsNeeded; t++)
                     {
                         sb.Append('\t');
                     }
@@ -254,7 +254,7 @@ public sealed class TamlFormatter
             sb.Append(_options.NormalizeLineEndings ? "\n" : Environment.NewLine);
         }
 
-        string result = sb.ToString();
+        var result = sb.ToString();
 
         // Ensure trailing newline if requested, or remove if not
         if (_options.EnsureTrailingNewline)
@@ -286,11 +286,11 @@ public sealed class TamlFormatter
         // alignmentColumn is the length of the longest key in the group
 
         // Calculate tabs needed to reach just past the longest key
-        int targetColumn = alignmentColumn + _options.TabSize;
+        var targetColumn = alignmentColumn + _options.TabSize;
 
         // How many tabs do we need from this key to reach that column?
-        int tabsNeeded = 1;
-        int currentPos = keyLength;
+        var tabsNeeded = 1;
+        var currentPos = keyLength;
 
         // Advance through tab stops until we're at or past target
         while (currentPos + _options.TabSize <= targetColumn)

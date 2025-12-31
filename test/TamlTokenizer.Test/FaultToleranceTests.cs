@@ -13,7 +13,7 @@ public sealed class FaultToleranceTests
         // User is typing - document is incomplete
         var source = "key\t";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         // Should produce tokens even if incomplete
         Assert.IsTrue(result.Tokens.Count > 0);
@@ -25,7 +25,7 @@ public sealed class FaultToleranceTests
     {
         var source = "key";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.Tokens.Count > 0);
         // Single word should be tokenized
@@ -41,7 +41,7 @@ public sealed class FaultToleranceTests
             	child
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.Tokens.Count > 0);
         Assert.IsTrue(result.Tokens.Any(t => t.Type == TamlTokenType.Indent));
@@ -57,7 +57,7 @@ public sealed class FaultToleranceTests
             another	valid
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         // Should still find all the key-value pairs
         var keys = result.Tokens.Where(t => t.Type == TamlTokenType.Key).ToList();
@@ -74,7 +74,7 @@ public sealed class FaultToleranceTests
             more	content
             """;
 
-        var tokens = Taml.GetTokens(source);
+        IReadOnlyList<TamlToken> tokens = Taml.GetTokens(source);
 
         Assert.IsTrue(tokens.Count > 0);
         Assert.IsTrue(tokens.Any(t => t.Type == TamlTokenType.EndOfFile));
@@ -99,7 +99,7 @@ public sealed class FaultToleranceTests
 
         foreach (var source in partials)
         {
-            var result = Taml.Tokenize(source);
+            TamlParseResult result = Taml.Tokenize(source);
             Assert.IsTrue(result.Tokens.Count > 0, $"Failed for: '{source}'");
         }
     }
@@ -109,7 +109,7 @@ public sealed class FaultToleranceTests
     {
         var source = "key\tvalue\n\n\n";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsTrue(result.Tokens.Any(t => t.Type == TamlTokenType.EndOfFile));
@@ -120,7 +120,7 @@ public sealed class FaultToleranceTests
     {
         var source = "\n\n\nkey\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsTrue(result.Tokens.Any(t => t.Type == TamlTokenType.Key));
@@ -131,7 +131,7 @@ public sealed class FaultToleranceTests
     {
         var source = "   \t\t   \n   ";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         // Should not crash, should produce EOF
         Assert.IsTrue(result.Tokens.Any(t => t.Type == TamlTokenType.EndOfFile));
@@ -146,7 +146,7 @@ public sealed class FaultToleranceTests
             # End
             """;
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsTrue(result.Tokens.Where(t => t.Type == TamlTokenType.Comment).Count() == 3);
@@ -158,7 +158,7 @@ public sealed class FaultToleranceTests
         // Unusual but should not crash
         var source = "key\tvalue with émojis 🎉 and üñíçödé";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.Tokens.Count > 0);
     }
@@ -169,7 +169,7 @@ public sealed class FaultToleranceTests
         var longValue = new string('x', 10000);
         var source = $"key\t{longValue}";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.Tokens.Count > 0);
     }
@@ -177,11 +177,11 @@ public sealed class FaultToleranceTests
     [TestMethod]
     public void WhenManyLinesThenHandled()
     {
-        var lines = Enumerable.Range(1, 1000)
+        IEnumerable<string> lines = Enumerable.Range(1, 1000)
             .Select(i => $"key{i}\tvalue{i}");
         var source = string.Join("\n", lines);
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.Tokens.Count > 0);
         Assert.IsTrue(result.Tokens.Any(t => t.Type == TamlTokenType.EndOfFile));
@@ -192,7 +192,7 @@ public sealed class FaultToleranceTests
     {
         var indent = "";
         var lines = new List<string>();
-        for (int i = 0; i < 50; i++)
+        for (var i = 0; i < 50; i++)
         {
             lines.Add($"{indent}level{i}");
             indent += "\t";
@@ -201,7 +201,7 @@ public sealed class FaultToleranceTests
 
         var source = string.Join("\n", lines);
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.Tokens.Count > 0);
     }
@@ -217,7 +217,7 @@ public sealed class FaultToleranceTests
     {
         var source = "valid\tvalue\n\t\t\tskipped_levels\tvalue";
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         // Should have both tokens AND errors
         Assert.IsTrue(result.Tokens.Count > 1);
@@ -244,7 +244,7 @@ public sealed class FaultToleranceTests
 
         foreach (var source in scenarios)
         {
-            var result = Taml.Tokenize(source);
+            TamlParseResult result = Taml.Tokenize(source);
             Assert.IsNotNull(result);
             Assert.IsNotNull(result.Tokens);
             Assert.IsTrue(result.Tokens.Count > 0, $"No tokens for scenario: '{source.Replace("\n", "\\n").Replace("\t", "\\t")}'");
@@ -261,8 +261,8 @@ public sealed class FaultToleranceTests
             	child	value
             """;
 
-        var result1 = Taml.Tokenize(source);
-        var result2 = Taml.Tokenize(source);
+        TamlParseResult result1 = Taml.Tokenize(source);
+        TamlParseResult result2 = Taml.Tokenize(source);
 
         Assert.AreEqual(result1.Tokens.Count, result2.Tokens.Count);
         Assert.AreEqual(result1.IsSuccess, result2.IsSuccess);
@@ -282,7 +282,7 @@ public sealed class FaultToleranceTests
 
         foreach (var source in scenarios)
         {
-            var result = Taml.Tokenize(source);
+            TamlParseResult result = Taml.Tokenize(source);
             Assert.IsTrue(result.Tokens.Any(t => t.Type == TamlTokenType.EndOfFile),
                 $"Missing EOF for: {source}");
         }
@@ -305,7 +305,7 @@ public sealed class FaultToleranceTests
     {
         var source = "key\tvalue";
 
-        var result = Taml.Tokenize(source, null);
+        TamlParseResult result = Taml.Tokenize(source, null);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsTrue(result.Tokens.Count > 0);
@@ -315,9 +315,9 @@ public sealed class FaultToleranceTests
     public void WhenTamlTokenEndPositionThenCorrect()
     {
         var source = "key\tvalue";
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
-        var keyToken = result.Tokens.First(t => t.Type == TamlTokenType.Key);
+        TamlToken keyToken = result.Tokens.First(t => t.Type == TamlTokenType.Key);
 
         Assert.AreEqual(keyToken.Position + keyToken.Length, keyToken.EndPosition);
         Assert.AreEqual(0, keyToken.Position);
@@ -330,11 +330,11 @@ public sealed class FaultToleranceTests
     {
         var source = "key\n\t\t\tbad"; // Skip levels error
 
-        var result = Taml.Tokenize(source);
+        TamlParseResult result = Taml.Tokenize(source);
 
         if (result.HasErrors)
         {
-            var error = result.Errors.First();
+            TamlError error = result.Errors.First();
             Assert.AreEqual(error.Position + error.Length, error.EndPosition);
         }
     }
