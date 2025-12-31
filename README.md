@@ -3,7 +3,7 @@
 
 # TAML Language Support for Visual Studio
 
-[![Build](https://github.com/madskristensen/TamlTokenizer/actions/workflows/build.yaml/badge.svg)](https://github.com/madskristensen/TamlTokenizer/actions/workflows/build.yaml)
+[![Build](https://github.com/madskristensen/TamlVS/actions/workflows/build.yaml/badge.svg)](https://github.com/madskristensen/TamlVS/actions/workflows/build.yaml)
 
 Download this extension from the [Visual Studio Marketplace][marketplace] or get the [CI build](https://www.vsixgallery.com/extension/TamlVS.7b83d024-c84a-4a22-8898-26756a60c934).
 
