@@ -21,17 +21,8 @@ namespace TamlVS.Editor
         }
     }
 
-    internal class SuggestedActionsSource : ISuggestedActionsSource2
+    internal class SuggestedActionsSource(ITextView textView, ITextBuffer textBuffer) : ISuggestedActionsSource2
     {
-        private readonly ITextView _textView;
-        private readonly ITextBuffer _textBuffer;
-
-        public SuggestedActionsSource(ITextView textView, ITextBuffer textBuffer)
-        {
-            _textView = textView;
-            _textBuffer = textBuffer;
-        }
-
         public event EventHandler<EventArgs> SuggestedActionsChanged { add { } remove { } }
 
         public void Dispose() { }
@@ -47,7 +38,7 @@ namespace TamlVS.Editor
             {
                 yield return new SuggestedActionSet(
                     categoryName: PredefinedSuggestedActionCategoryNames.Refactoring,
-                    actions: [new SortKeysAction(range.Snapshot, cursorLine, _textBuffer)],
+                    actions: [new SortKeysAction(range.Snapshot, cursorLine, textBuffer)],
                     title: "TAML");
             }
         }
@@ -77,7 +68,7 @@ namespace TamlVS.Editor
 
         private int GetCursorLineNumber(ITextSnapshot snapshot)
         {
-            var caretPosition = _textView.Caret.Position.BufferPosition.Position;
+            var caretPosition = textView.Caret.Position.BufferPosition.Position;
             return snapshot.GetLineFromPosition(caretPosition).LineNumber;
         }
     }
@@ -85,19 +76,8 @@ namespace TamlVS.Editor
     /// <summary>
     /// Suggested action that sorts child keys alphabetically.
     /// </summary>
-    internal class SortKeysAction : ISuggestedAction
+    internal class SortKeysAction(ITextSnapshot snapshot, int cursorLineNumber, ITextBuffer textBuffer) : ISuggestedAction
     {
-        private readonly ITextSnapshot _snapshot;
-        private readonly int _cursorLineNumber;
-        private readonly ITextBuffer _textBuffer;
-
-        public SortKeysAction(ITextSnapshot snapshot, int cursorLineNumber, ITextBuffer textBuffer)
-        {
-            _snapshot = snapshot;
-            _cursorLineNumber = cursorLineNumber;
-            _textBuffer = textBuffer;
-        }
-
         public string DisplayText => "Sort keys alphabetically";
         public string IconAutomationText => null;
         public ImageMoniker IconMoniker => KnownMonikers.SortAscending;
@@ -115,18 +95,18 @@ namespace TamlVS.Editor
 
         public void Invoke(CancellationToken cancellationToken)
         {
-            var result = TamlSorter.Sort(_snapshot, _cursorLineNumber);
+            TamlSorter.SortResult? result = TamlSorter.Sort(snapshot, cursorLineNumber);
             if (result == null)
             {
                 return;
             }
 
-            var sortResult = result.Value;
-            var firstLine = _snapshot.GetLineFromLineNumber(sortResult.StartLine);
-            var lastLine = _snapshot.GetLineFromLineNumber(sortResult.EndLine);
+            TamlSorter.SortResult sortResult = result.Value;
+            ITextSnapshotLine firstLine = snapshot.GetLineFromLineNumber(sortResult.StartLine);
+            ITextSnapshotLine lastLine = snapshot.GetLineFromLineNumber(sortResult.EndLine);
             var spanToReplace = new Span(firstLine.Start.Position, lastLine.End.Position - firstLine.Start.Position);
 
-            using (var edit = _textBuffer.CreateEdit())
+            using (ITextEdit edit = textBuffer.CreateEdit())
             {
                 edit.Replace(spanToReplace, sortResult.SortedText);
                 edit.Apply();

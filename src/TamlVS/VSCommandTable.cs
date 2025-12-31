@@ -29,7 +29,6 @@ namespace TamlVS
         public const int TamlMenu = 0x0002;
         public const int ConvertGroup = 0x0010;
         public const int SettingsGroup = 0x0020;
-        public const int SortKeys = 0x0090;
         public const int CopyAsJson = 0x0100;
         public const int PasteAsTaml = 0x0110;
         public const int OpenSettings = 0x0200;

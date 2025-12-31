@@ -12,6 +12,7 @@
         <Parent guid="TamlVS" id="TamlMenuGroup" />
         <Strings>
           <ButtonText>TAML</ButtonText>
+          <CanonicalName>TAML.Menu</CanonicalName>
         </Strings>
       </Menu>
     </Menus>

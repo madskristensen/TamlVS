@@ -13,35 +13,21 @@ namespace TamlVS.Editor
         /// <summary>
         /// Represents a sortable section of TAML content (a key and its nested children).
         /// </summary>
-        private readonly struct Section
+        private readonly struct Section(int startLine, int endLine, string key)
         {
-            public int StartLine { get; }
-            public int EndLine { get; }
-            public string Key { get; }
-
-            public Section(int startLine, int endLine, string key)
-            {
-                StartLine = startLine;
-                EndLine = endLine;
-                Key = key;
-            }
+            public int StartLine { get; } = startLine;
+            public int EndLine { get; } = endLine;
+            public string Key { get; } = key;
         }
 
         /// <summary>
         /// Result of a sort operation containing the line range and sorted text.
         /// </summary>
-        public readonly struct SortResult
+        public readonly struct SortResult(int startLine, int endLine, string sortedText)
         {
-            public int StartLine { get; }
-            public int EndLine { get; }
-            public string SortedText { get; }
-
-            public SortResult(int startLine, int endLine, string sortedText)
-            {
-                StartLine = startLine;
-                EndLine = endLine;
-                SortedText = sortedText;
-            }
+            public int StartLine { get; } = startLine;
+            public int EndLine { get; } = endLine;
+            public string SortedText { get; } = sortedText;
         }
 
         /// <summary>
@@ -118,14 +104,14 @@ namespace TamlVS.Editor
             var parentIndent = GetIndent(parentText);
 
             // Find the range of child lines
-            var (firstChildLine, lastChildLine, childIndent) = FindChildRange(snapshot, cursorLineNumber, parentIndent);
+            (var firstChildLine, var lastChildLine, var childIndent) = FindChildRange(snapshot, cursorLineNumber, parentIndent);
             if (firstChildLine < 0)
             {
                 return null;
             }
 
             // Collect sections (each key with its nested content)
-            var sections = CollectSections(snapshot, firstChildLine, lastChildLine, childIndent);
+            List<Section> sections = CollectSections(snapshot, firstChildLine, lastChildLine, childIndent);
             if (sections.Count <= 1)
             {
                 return null;
@@ -246,11 +232,11 @@ namespace TamlVS.Editor
         {
             var sb = new StringBuilder();
 
-            foreach (var section in sortedSections)
+            foreach (Section section in sortedSections)
             {
                 for (var i = section.StartLine; i <= section.EndLine; i++)
                 {
-                    var line = snapshot.GetLineFromLineNumber(i);
+                    ITextSnapshotLine line = snapshot.GetLineFromLineNumber(i);
                     sb.Append(line.GetTextIncludingLineBreak());
                 }
             }
