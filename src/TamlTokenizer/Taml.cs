@@ -49,9 +49,16 @@ public static class Taml
         if (source is null)
             throw new ArgumentNullException(nameof(source));
 
+        options ??= TamlParserOptions.Default;
         var lexer = new TamlLexer(source, options);
         var tokens = lexer.Tokenize();
         var errors = new List<TamlError>(lexer.Errors);
+
+        // Perform structural validation in strict mode
+        if (options.StrictMode)
+        {
+            ValidateStructure(tokens, errors);
+        }
 
         if (errors.Count > 0)
         {
@@ -60,6 +67,118 @@ public static class Taml
 
         return TamlParseResult.Success(tokens);
     }
+
+
+    /// <summary>
+    /// Validates the structural integrity of a TAML document.
+    /// Checks for orphaned lines, parent-with-value errors, and empty keys.
+    /// </summary>
+    private static void ValidateStructure(IReadOnlyList<TamlToken> tokens, List<TamlError> errors)
+    {
+        // Track the previous line's state to detect orphaned lines
+        var previousLineHadValue = false;
+        var previousLineIndentLevel = 0;
+        var currentIndentLevel = 0;
+
+        // Track keys that have values to detect parent-with-value errors
+        // Key: "line:indent", Value: token info for error reporting
+        var keysWithValues = new Dictionary<string, TamlToken>();
+
+        for (var i = 0; i < tokens.Count; i++)
+        {
+            var token = tokens[i];
+
+            switch (token.Type)
+            {
+                case TamlTokenType.Indent:
+                    currentIndentLevel++;
+
+                    // Check for orphaned line: indentation increased after a key-value pair
+                    if (previousLineHadValue && currentIndentLevel > previousLineIndentLevel)
+                    {
+                        errors.Add(new TamlError(
+                            "Indented line has no parent (previous line has a value)",
+                            token.Position, token.Length, token.Line, token.Column,
+                            TamlErrorCode.OrphanedLine));
+                    }
+
+                    // Check for parent-with-value: a key with a value now has children
+                    // Find the parent key at previousLineIndentLevel
+                    var parentKeyLookup = MakeKey(token.Line - 1, previousLineIndentLevel);
+                    if (keysWithValues.TryGetValue(parentKeyLookup, out var parentKey))
+                    {
+                        errors.Add(new TamlError(
+                            "Key '" + parentKey.Value + "' has a value but also has children",
+                            parentKey.Position, parentKey.Length, parentKey.Line, parentKey.Column,
+                            TamlErrorCode.ParentWithValue));
+                        keysWithValues.Remove(parentKeyLookup);
+                    }
+                    break;
+
+                case TamlTokenType.Dedent:
+                    currentIndentLevel--;
+                    break;
+
+                case TamlTokenType.Key:
+                    // Check for empty key
+                    if (string.IsNullOrWhiteSpace(token.Value))
+                    {
+                        errors.Add(new TamlError(
+                            "Empty key",
+                            token.Position, Math.Max(1, token.Length), token.Line, token.Column,
+                            TamlErrorCode.EmptyKey));
+                    }
+
+                    // Check if this key is followed by a value (tab then value)
+                    for (var j = i + 1; j < tokens.Count; j++)
+                    {
+                        var nextToken = tokens[j];
+                        if (nextToken.Type == TamlTokenType.Tab)
+                        {
+                            // Look for value after tab
+                            for (var k = j + 1; k < tokens.Count; k++)
+                            {
+                                var valueToken = tokens[k];
+                                if (valueToken.Type == TamlTokenType.Value ||
+                                    valueToken.Type == TamlTokenType.Null ||
+                                    valueToken.Type == TamlTokenType.EmptyString)
+                                {
+                                    keysWithValues[MakeKey(token.Line, currentIndentLevel)] = token;
+                                    break;
+                                }
+                                if (valueToken.Type != TamlTokenType.Tab &&
+                                    valueToken.Type != TamlTokenType.Whitespace)
+                                {
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        if (nextToken.Type == TamlTokenType.Newline ||
+                            nextToken.Type == TamlTokenType.EndOfFile)
+                        {
+                            break;
+                        }
+                    }
+                    break;
+
+                case TamlTokenType.Newline:
+                    // Update previous line state
+                    previousLineHadValue = keysWithValues.ContainsKey(MakeKey(token.Line, currentIndentLevel));
+                    previousLineIndentLevel = currentIndentLevel;
+                    break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Creates a dictionary key from line and indent level.
+    /// </summary>
+    private static string MakeKey(int line, int indent)
+    {
+        return line.ToString() + ":" + indent.ToString();
+    }
+
 
     /// <summary>
     /// Tokenizes a TAML document in strict mode.

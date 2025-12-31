@@ -434,18 +434,9 @@ public sealed class TamlLexer
             char c = Current;
 
             // Stop at tab, newline, or end
+            // Note: Tabs always act as separators in TAML, so "tab in content" cannot occur
             if (c == '\t' || c == '\n' || c == '\r')
             {
-                break;
-            }
-
-            // Check for embedded tab (error)
-            if (c == '\t')
-            {
-                _errors.Add(new TamlError(
-                    "Tab character found within content",
-                    _position, 1, _line, _column,
-                    TamlErrorCode.TabInContent));
                 break;
             }
 

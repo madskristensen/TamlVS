@@ -254,4 +254,71 @@ public sealed class ValidationErrorTests
         // Should collect multiple errors in lenient mode
         Assert.IsTrue(result.HasErrors);
     }
+
+    [TestMethod]
+    public void WhenOrphanedLineThenError()
+    {
+        // TAML spec: "Indented lines must have a parent. You cannot increase indentation after a key-value pair."
+        var source = "name\tvalue\n\torphan\tvalue";
+
+        var result = Taml.TokenizeStrict(source);
+
+        Assert.IsTrue(result.HasErrors);
+        Assert.IsTrue(result.Errors.Any(e => e.Code == TamlErrorCode.OrphanedLine));
+    }
+
+    [TestMethod]
+    public void WhenParentKeyWithValueAndChildrenThenError()
+    {
+        // TAML spec: "A key with children (parent key) must not have a value on the same line."
+        var source = "server\tlocalhost\n\tport\t8080";
+
+        var result = Taml.TokenizeStrict(source);
+
+        Assert.IsTrue(result.HasErrors);
+        Assert.IsTrue(result.Errors.Any(e => e.Code == TamlErrorCode.ParentWithValue));
+    }
+
+    [TestMethod]
+    public void WhenParentKeyWithoutValueThenNoError()
+    {
+        // Valid: Parent key without value followed by children
+        var source = "server\n\thost\tlocalhost\n\tport\t8080";
+
+        var result = Taml.TokenizeStrict(source);
+
+        Assert.IsFalse(result.Errors.Any(e => e.Code == TamlErrorCode.ParentWithValue));
+    }
+
+    [TestMethod]
+    public void WhenKeyValueWithoutChildrenThenNoOrphanError()
+    {
+        // Valid: Key-value pairs without children don't create orphan errors
+        var source = "name\tvalue\nother\tvalue2";
+
+        var result = Taml.TokenizeStrict(source);
+
+        Assert.IsFalse(result.Errors.Any(e => e.Code == TamlErrorCode.OrphanedLine));
+    }
+
+    [TestMethod]
+    public void WhenValidNestedStructureThenNoErrors()
+    {
+        // Valid nested structure should not trigger any structural errors
+        var source = """
+            server
+            	host	localhost
+            	port	8080
+            	settings
+            		timeout	30
+            		retry	3
+            """;
+
+        var result = Taml.TokenizeStrict(source);
+
+        Assert.IsFalse(result.Errors.Any(e =>
+            e.Code == TamlErrorCode.OrphanedLine ||
+            e.Code == TamlErrorCode.ParentWithValue ||
+            e.Code == TamlErrorCode.EmptyKey));
+    }
 }

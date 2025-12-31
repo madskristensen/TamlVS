@@ -41,10 +41,13 @@ settings
 Full syntax highlighting support for `.taml` files that follows the official TAML specification. Colors distinguish between keys, values, comments, null values (`~`), and empty strings (`""`).
 
 ### Error Detection
-Real-time syntax validation with inline error messages and warnings displayed in the Error List window. Hover over any error to see detailed information about what went wrong. Detects common issues like:
+Real-time syntax validation with inline error messages and warnings displayed in the Error List window. Hover over any error to see detailed information about what went wrong. Detects issues per the TAML specification:
 - Space indentation (TAML requires tabs)
 - Mixed tabs and spaces
-- Invalid characters
+- Inconsistent indentation (skipped levels)
+- Orphaned lines (indented after key-value pair)
+- Parent key with value and children
+- Empty keys
 
 ### Document Formatting
 Format your TAML documents with **Edit > Advanced > Format Document** (Ctrl+K, Ctrl+D) or format just a selection with **Format Selection** (Ctrl+K, Ctrl+F). The formatter ensures consistent tab-based indentation and proper key-value alignment.
