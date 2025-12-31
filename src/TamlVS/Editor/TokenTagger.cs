@@ -51,12 +51,13 @@ namespace TamlVS
             {
                 TagAll(list);
 
-                if (list.Any())
+                if (list.Count > 0)
                 {
                     CreateErrorListItems(list);
                     OnTagsUpdated(list);
                 }
             }
+
 
             return Task.CompletedTask;
         }
@@ -154,7 +155,7 @@ namespace TamlVS
                 if (depth > 0 && IsContentToken(token.Type))
                 {
                     // If this is on a new line, or further in the same line, update
-                    if (token.Line > lastContentLine || 
+                    if (token.Line > lastContentLine ||
                         (token.Line == lastContentLine && token.EndPosition > lastContentEndInLine))
                     {
                         lastContentLine = token.Line;
@@ -171,6 +172,8 @@ namespace TamlVS
             return Math.Min(lastContentEndInLine, snapshot.Length);
         }
 
+
+
         /// <summary>
         /// Determines if a token type represents actual content (not structural or whitespace).
         /// </summary>
@@ -185,15 +188,55 @@ namespace TamlVS
 
         private void CreateErrorListItems(List<ITagSpan<TokenTag>> list)
         {
-            foreach (TamlError error in _document.Result.Errors)
+            IReadOnlyList<TamlError> errors = _document.Result.Errors;
+            if (errors.Count == 0)
             {
-                // Find the best matching span for this error, excluding whitespace/outlining tags
-                ITagSpan<TokenTag> span =
-                    list.FirstOrDefault(s => !Equals(s.Tag.TokenType, TamlTokenType.Whitespace) &&
-                                             s.Span.Start <= error.Position &&
-                                             s.Span.End >= error.EndPosition) ??
-                    list.FirstOrDefault(s => !Equals(s.Tag.TokenType, TamlTokenType.Whitespace) &&
-                                             s.Span.Start.GetContainingLineNumber() == error.Line - 1);
+                return;
+            }
+
+            // Build a list of non-whitespace spans sorted by position for efficient lookup
+            List<ITagSpan<TokenTag>> contentSpans = null;
+
+            foreach (TamlError error in errors)
+            {
+                ITagSpan<TokenTag> span = null;
+
+                // Lazy-initialize the content spans list
+                if (contentSpans == null)
+                {
+                    contentSpans = new List<ITagSpan<TokenTag>>(list.Count);
+                    foreach (ITagSpan<TokenTag> s in list)
+                    {
+                        if (!Equals(s.Tag.TokenType, TamlTokenType.Whitespace))
+                        {
+                            contentSpans.Add(s);
+                        }
+                    }
+                }
+
+                // Find span containing error position
+                foreach (ITagSpan<TokenTag> s in contentSpans)
+                {
+                    if (s.Span.Start <= error.Position && s.Span.End >= error.EndPosition)
+                    {
+                        span = s;
+                        break;
+                    }
+                }
+
+                // Fallback: find span on same line
+                if (span == null)
+                {
+                    var errorLine = error.Line - 1;
+                    foreach (ITagSpan<TokenTag> s in contentSpans)
+                    {
+                        if (s.Span.Start.GetContainingLineNumber() == errorLine)
+                        {
+                            span = s;
+                            break;
+                        }
+                    }
+                }
 
                 if (span == null)
                 {
@@ -220,17 +263,20 @@ namespace TamlVS
 
         public override Task<object> GetTooltipAsync(SnapshotPoint triggerPoint)
         {
-            ITagSpan<TokenTag> item = TagsCache.FirstOrDefault(s => s.Tag.Errors.Any() && s.Span.Contains(triggerPoint.Position));
+            var position = triggerPoint.Position;
 
-            // Error messages
-            if (item != null)
+            // Linear search with early termination on position check
+            foreach (ITagSpan<TokenTag> s in TagsCache)
             {
-                ContainerElement elm = new(
-                    ContainerElementStyle.Wrapped,
-                    new ImageElement(_errorIcon),
-                    string.Join(Environment.NewLine, item.Tag.Errors.Select(e => e.Message)));
+                if (s.Tag.Errors.Any() && s.Span.Contains(position))
+                {
+                    ContainerElement elm = new(
+                        ContainerElementStyle.Wrapped,
+                        new ImageElement(_errorIcon),
+                        string.Join(Environment.NewLine, s.Tag.Errors.Select(e => e.Message)));
 
-                return Task.FromResult<object>(elm);
+                    return Task.FromResult<object>(elm);
+                }
             }
 
             return Task.FromResult<object>(null);
@@ -239,7 +285,7 @@ namespace TamlVS
         public override string GetOutliningText(string text)
         {
             var tab = text.IndexOf('\t');
-            return tab > 0 ? text.Substring(0, tab) : base.GetOutliningText(text);
+            return tab > 0 ? text.Substring(0, tab).Trim() : base.GetOutliningText(text);
         }
 
         public void Dispose()
