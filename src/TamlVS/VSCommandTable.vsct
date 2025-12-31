@@ -31,17 +31,6 @@
     </Groups>
 
     <Buttons>
-      <Button guid="TamlVS" id="SortKeys" priority="0x0090" type="Button">
-        <Parent guid="TamlVS" id="ConvertGroup" />
-        <Icon guid="ImageCatalogGuid" id="SortAscending" />
-        <CommandFlag>IconIsMoniker</CommandFlag>
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <Strings>
-          <ButtonText>Sort Keys</ButtonText>
-          <CanonicalName>.TAML.SortKeys</CanonicalName>
-        </Strings>
-      </Button>
-
       <Button guid="TamlVS" id="CopyAsJson" priority="0x0100" type="Button">
         <Parent guid="TamlVS" id="ConvertGroup" />
         <Icon guid="ImageCatalogGuid" id="JSScript" />
@@ -78,7 +67,6 @@
   </Commands>
 
   <VisibilityConstraints>
-    <VisibilityItem guid="TamlVS" id="SortKeys" context="EditorFactory" />
     <VisibilityItem guid="TamlVS" id="CopyAsJson" context="EditorFactory" />
     <VisibilityItem guid="TamlVS" id="PasteAsTaml" context="EditorFactory" />
     <VisibilityItem guid="TamlVS" id="OpenSettings" context="EditorFactory" />
@@ -91,7 +79,6 @@
       <IDSymbol name="TamlMenu" value="0x0002" />
       <IDSymbol name="ConvertGroup" value="0x0010" />
       <IDSymbol name="SettingsGroup" value="0x0020" />
-      <IDSymbol name="SortKeys" value="0x0090" />
       <IDSymbol name="CopyAsJson" value="0x0100" />
       <IDSymbol name="PasteAsTaml" value="0x0110" />
       <IDSymbol name="OpenSettings" value="0x0200" />

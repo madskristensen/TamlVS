@@ -5,6 +5,9 @@ using TamlTokenizer;
 
 namespace TamlVS
 {
+    /// <summary>
+    /// Represents a parsed TAML document that automatically re-parses when the buffer changes.
+    /// </summary>
     public class Document : IDisposable
     {
         private readonly ITextBuffer _buffer;
@@ -22,10 +25,19 @@ namespace TamlVS
             ParseAsync().FireAndForget();
         }
 
+        /// <summary>
+        /// Gets the file name of the document.
+        /// </summary>
         public string FileName { get; }
 
+        /// <summary>
+        /// Gets a value indicating whether the document is currently being parsed.
+        /// </summary>
         public bool IsParsing => _isParsing;
 
+        /// <summary>
+        /// Gets the result of the most recent parse operation.
+        /// </summary>
         public TamlParseResult Result
         {
             get
@@ -43,6 +55,11 @@ namespace TamlVS
                 }
             }
         }
+
+        /// <summary>
+        /// Occurs when the document has been successfully parsed.
+        /// </summary>
+        public event Action<Document> Parsed;
 
         private void OnBufferChanged(object sender, TextContentChangedEventArgs e)
         {
@@ -93,7 +110,5 @@ namespace TamlVS
                 _result = null;
             }
         }
-
-        public event Action<Document> Parsed;
     }
 }

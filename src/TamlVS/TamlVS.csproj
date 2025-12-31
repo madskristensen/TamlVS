@@ -49,12 +49,13 @@
     <Compile Include="Commands\FormatDocumentHandler.cs" />
     <Compile Include="Commands\OpenSettingsCommand.cs" />
     <Compile Include="Commands\PasteAsTamlCommand.cs" />
-    <Compile Include="Commands\SortKeysCommand.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Document.cs" />
     <Compile Include="Editor\DropdownBars.cs" />
     <Compile Include="Editor\EditorFeatures.cs" />
     <Compile Include="Editor\LanguageFactory.cs" />
+    <Compile Include="Editor\SuggestedActions.cs" />
+    <Compile Include="Editor\TamlSorter.cs" />
     <Compile Include="Editor\TokenTagger.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Options\GeneralOptions.cs" />

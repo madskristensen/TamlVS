@@ -49,8 +49,6 @@ Full syntax highlighting support for `.taml` files that follows the official TAM
 - **Empty strings** - `""`
 - **Comments** - Lines starting with `#`
 
-![Syntax highlighting](art/syntax-highlighting.png)
-
 ### Error Detection
 Real-time syntax validation with inline error messages and warnings displayed in the Error List window. Hover over any error to see detailed information about what went wrong. Detects issues per the TAML specification:
 - Space indentation (TAML requires tabs)
@@ -63,12 +61,20 @@ Real-time syntax validation with inline error messages and warnings displayed in
 ### Document Formatting
 Format your TAML documents with **Edit > Advanced > Format Document** (Ctrl+K, Ctrl+D) or format just a selection with **Format Selection** (Ctrl+K, Ctrl+F). The formatter ensures consistent tab-based indentation and proper key-value alignment.
 
+### Sort Keys
+Place your cursor on any key that has child keys and use the lightbulb menu (Ctrl+.) to sort child keys alphabetically. This helps maintain consistent ordering in configuration files.
+
+### JSON Conversion
+Right-click in a TAML file to access the **TAML** context menu with conversion options:
+- **Copy as JSON** - Converts the entire TAML document to JSON and copies it to the clipboard
+- **Paste JSON as TAML** - Pastes JSON from the clipboard and converts it to TAML format
+
 ### Navigation Bar
 The editor navigation bar shows a hierarchical dropdown of all keys in your document. Click any key to jump directly to it. Keys with children are displayed with indentation to show the document structure.
 
 ![Navigation bar](art/navigation-bar.png)
 
-### Outlining/code folding
+### Outlining/Code Folding
 Collapse and expand nested sections using the outlining (code folding) feature. Keys with nested children can be collapsed to hide their contents.
 
 ## Options
