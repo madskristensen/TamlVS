@@ -1,5 +1,4 @@
 using System.ComponentModel.Composition;
-using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Commanding;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
@@ -24,11 +23,11 @@ namespace TamlVS.Editor
             // Get the current line
             SnapshotPoint caretPosition = textView.Caret.Position.BufferPosition;
             ITextSnapshotLine currentLine = caretPosition.GetContainingLine();
-            string lineText = currentLine.GetText();
+            var lineText = currentLine.GetText();
 
             // Count leading tabs on current line
             var leadingTabs = 0;
-            foreach (char c in lineText)
+            foreach (var c in lineText)
             {
                 if (c == '\t')
                 {
@@ -47,8 +46,8 @@ namespace TamlVS.Editor
             }
 
             // Build the new line text with indentation
-            string indent = new string('\t', leadingTabs);
-            string newLineText = Environment.NewLine + indent;
+            var indent = new string('\t', leadingTabs);
+            var newLineText = Environment.NewLine + indent;
 
             // Insert the new line with indentation
             using (ITextEdit edit = buffer.CreateEdit())
