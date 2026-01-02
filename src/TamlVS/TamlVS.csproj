@@ -51,6 +51,7 @@
     <Compile Include="Commands\PasteAsTamlCommand.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Document.cs" />
+    <Compile Include="Editor\CompletionSource.cs" />
     <Compile Include="Editor\DropdownBars.cs" />
     <Compile Include="Editor\EditorFeatures.cs" />
     <Compile Include="Editor\LanguageFactory.cs" />

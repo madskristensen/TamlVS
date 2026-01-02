@@ -4,6 +4,9 @@
 # TAML Language Support for Visual Studio
 
 [![Build](https://github.com/madskristensen/TamlVS/actions/workflows/build.yaml/badge.svg)](https://github.com/madskristensen/TamlVS/actions/workflows/build.yaml)
+[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/MadsKristensen.TamlVS?label=VS%20Marketplace)][marketplace]
+[![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/MadsKristensen.TamlVS)][marketplace]
+[![Visual Studio Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/MadsKristensen.TamlVS)][marketplace]
 
 Download this extension from the [Visual Studio Marketplace][marketplace] or get the [CI build](https://www.vsixgallery.com/extension/TamlVS.7b83d024-c84a-4a22-8898-26756a60c934).
 
@@ -48,6 +51,14 @@ Full syntax highlighting support for `.taml` files that follows the official TAM
 - **Null values** - The `~` character
 - **Empty strings** - `""`
 - **Comments** - Lines starting with `#`
+
+### IntelliSense
+Get completion suggestions for TAML's special values when typing in value positions:
+- `true` / `false` - Boolean values
+- `~` - Null value
+- `""` - Empty string
+
+Press Ctrl+Space in any value position to see available completions.
 
 ### Error Detection
 Real-time syntax validation with inline error messages and warnings displayed in the Error List window. Hover over any error to see detailed information about what went wrong. Detects issues per the TAML specification:

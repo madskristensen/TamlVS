@@ -1,7 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using Microsoft.VisualStudio.Language.Intellisense;
+using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Language.StandardClassification;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
@@ -51,12 +51,12 @@ namespace TamlVS
     internal sealed class Tooltips : TokenQuickInfoBase
     { }
 
-    //[Export(typeof(IAsyncCompletionCommitManagerProvider))]
-    //[ContentType(Constants.LanguageName)]
-    //internal sealed class CompletionCommitManager : CompletionCommitManagerBase
-    //{
-    //    public override IEnumerable<char> CommitChars => ['\t', '\n'];
-    //}
+    [Export(typeof(IAsyncCompletionCommitManagerProvider))]
+    [ContentType(Constants.LanguageName)]
+    internal sealed class CompletionCommitManager : CompletionCommitManagerBase
+    {
+        public override IEnumerable<char> CommitChars => ['\t', '\n'];
+    }
 
     //[Export(typeof(IViewTaggerProvider))]
     //[TagType(typeof(TextMarkerTag))]
