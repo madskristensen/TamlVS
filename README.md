@@ -92,6 +92,9 @@ The editor navigation bar shows a hierarchical dropdown of all keys in your docu
 ### Outlining/Code Folding
 Collapse and expand nested sections using the outlining (code folding) feature. Keys with nested children can be collapsed to hide their contents.
 
+### Auto-Indentation
+When you press `Enter`, the editor automatically maintains the indentation level of the current line. This makes it easy to add sibling keys at the same hierarchy level without manually typing tabs.
+
 ## Options
 
 Configure the extension behavior via **Tools > Options > TAML > General**.
