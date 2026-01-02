@@ -124,7 +124,7 @@ Simply open any `.taml` file in Visual Studio, and the extension will automatica
 
 ## Learn More
 
-- [TAML Specification](https://github.com/madskristensen/TamlTokenizer/blob/main/TAML-SPEC.md) - Official format specification
+- [TAML Specification](https://github.com/csharpfritz/Taml/blob/main/TAML-SPEC.md) - Official format specification
 - [TamlTokenizer NuGet Package](https://www.nuget.org/packages/TamlTokenizer) - The .NET library powering this extension
 
 ## How can I help?

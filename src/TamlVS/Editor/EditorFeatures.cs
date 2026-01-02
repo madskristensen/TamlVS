@@ -17,7 +17,7 @@ namespace TamlVS
     {
         public override Dictionary<object, string> ClassificationMap { get; } = new Dictionary<object, string>
         {
-            { TamlTokenType.Key, PredefinedClassificationTypeNames.SymbolDefinition },
+            { TamlTokenType.Key, PredefinedClassificationTypeNames.Keyword },
             { TamlTokenType.Value, PredefinedClassificationTypeNames.String },
             { TamlTokenType.Tab, PredefinedClassificationTypeNames.WhiteSpace },
             { TamlTokenType.Newline, PredefinedClassificationTypeNames.WhiteSpace },

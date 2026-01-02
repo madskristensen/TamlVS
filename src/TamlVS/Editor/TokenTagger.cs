@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.Core.Imaging;
 using Microsoft.VisualStudio.Imaging;
-using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Adornments;
 using Microsoft.VisualStudio.Text.Tagging;
@@ -164,12 +163,7 @@ namespace TamlVS
                 }
             }
 
-            if (!foundIndent)
-            {
-                return tokens[keyIndex].EndPosition;
-            }
-
-            return Math.Min(lastContentEndInLine, snapshot.Length);
+            return !foundIndent ? tokens[keyIndex].EndPosition : Math.Min(lastContentEndInLine, snapshot.Length);
         }
 
 
@@ -179,13 +173,13 @@ namespace TamlVS
         /// </summary>
         private static bool IsContentToken(TamlTokenType type)
         {
-            return type == TamlTokenType.Key ||
-                   type == TamlTokenType.Value ||
-                   type == TamlTokenType.Null ||
-                   type == TamlTokenType.Boolean ||
-                   type == TamlTokenType.Number ||
-                   type == TamlTokenType.EmptyString ||
-                   type == TamlTokenType.Comment;
+            return type is TamlTokenType.Key or
+                   TamlTokenType.Value or
+                   TamlTokenType.Null or
+                   TamlTokenType.Boolean or
+                   TamlTokenType.Number or
+                   TamlTokenType.EmptyString or
+                   TamlTokenType.Comment;
         }
 
         private void CreateErrorListItems(List<ITagSpan<TokenTag>> list)
