@@ -71,6 +71,7 @@ namespace TamlVS
     public class SameWordHighlighter : SameWordHighlighterBase
     { }
 
+
     [Export(typeof(IWpfTextViewCreationListener))]
     [ContentType(Constants.LanguageName)]
     [TextViewRole(PredefinedTextViewRoles.PrimaryDocument)]

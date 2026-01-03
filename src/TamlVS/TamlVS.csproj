@@ -57,6 +57,7 @@
     <Compile Include="Editor\EditorFeatures.cs" />
     <Compile Include="Editor\LanguageFactory.cs" />
     <Compile Include="Editor\SuggestedActions.cs" />
+    <Compile Include="Editor\TabKeyHandler.cs" />
     <Compile Include="Editor\TamlSorter.cs" />
     <Compile Include="Editor\TokenTagger.cs" />
     <Compile Include="ExtensionMethods.cs" />
