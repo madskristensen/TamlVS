@@ -46,6 +46,32 @@ public sealed class ValidationErrorTests
     }
 
     [TestMethod]
+    public void WhenSpaceSeparatorThenError()
+    {
+        // TAML spec: Only tabs can separate keys from values, not spaces
+        var source = "key value\treal_value"; // "key value" is the key, tab, then value
+        // This catches the case where a key contains spaces (which suggests user meant to use tab)
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.HasErrors);
+        Assert.IsTrue(result.Errors.Any(e => e.Code == TamlErrorCode.SpaceSeparator));
+    }
+
+    [TestMethod]
+    public void WhenMultipleValuesOnLineThenError()
+    {
+        // TAML spec: Each line can have at most one key-value pair
+        var source = "key\tvalue\tsomething\telse"; // Multiple tab separators
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.HasErrors);
+        Assert.IsTrue(result.Errors.Any(e => e.Code == TamlErrorCode.MultipleValuesOnLine));
+    }
+
+
+    [TestMethod]
     public void WhenLenientModeThenContinuesAfterError()
     {
         // Default lenient mode should continue parsing after errors
@@ -67,7 +93,7 @@ public sealed class ValidationErrorTests
 
         if (result.HasErrors)
         {
-            TamlError error = result.Errors.First();
+            TamlError error = result.Errors[0];
             Assert.IsTrue(error.Line > 0);
             Assert.IsTrue(error.Column > 0);
         }
@@ -82,7 +108,7 @@ public sealed class ValidationErrorTests
 
         if (result.HasErrors)
         {
-            TamlError error = result.Errors.First();
+            TamlError error = result.Errors[0];
             Assert.IsTrue(error.Position >= 0);
         }
     }
@@ -125,15 +151,15 @@ public sealed class ValidationErrorTests
     }
 
     [TestMethod]
-    public void WhenSpaceIndentationInLenientModeThenNoError()
+    public void WhenSpaceIndentationThenAlwaysError()
     {
-        // Lenient mode should not error on space indentation
+        // Space indentation is always an error - TAML requires tabs
         var source = "server\n  host\tlocalhost";
 
         TamlParseResult result = Taml.Tokenize(source); // Default lenient mode
 
-        // Should not have space indentation error in lenient mode
-        Assert.IsFalse(result.Errors.Any(e => e.Code == TamlErrorCode.SpaceIndentation));
+        // Should have space indentation error even in lenient mode
+        Assert.IsTrue(result.Errors.Any(e => e.Code == TamlErrorCode.SpaceIndentation));
     }
 
     [TestMethod]
@@ -222,7 +248,7 @@ public sealed class ValidationErrorTests
 
         if (result.HasErrors)
         {
-            TamlError error = result.Errors.First();
+            TamlError error = result.Errors[0];
             Assert.IsFalse(string.IsNullOrEmpty(error.Message));
             Assert.IsTrue(error.Message.Length > 10); // Should be descriptive
         }
@@ -237,7 +263,7 @@ public sealed class ValidationErrorTests
 
         if (result.HasErrors)
         {
-            TamlError error = result.Errors.First();
+            TamlError error = result.Errors[0];
             Assert.IsNotNull(error.Code);
             Assert.IsTrue(error.Code.StartsWith("TAML"));
         }
@@ -320,5 +346,191 @@ public sealed class ValidationErrorTests
             e.Code == TamlErrorCode.OrphanedLine ||
             e.Code == TamlErrorCode.ParentWithValue ||
             e.Code == TamlErrorCode.EmptyKey));
+    }
+
+    // Edge case tests
+
+    [TestMethod]
+    public void WhenOnlyWhitespaceThenNoContentErrors()
+    {
+        // Lines with only whitespace should be ignored
+        var source = "key\tvalue\n\t\t\n\nother\tvalue2";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsFalse(result.Errors.Any(e => e.Code == TamlErrorCode.EmptyKey));
+    }
+
+    [TestMethod]
+    public void WhenTrailingTabsOnLineThenNoError()
+    {
+        // Trailing tabs after value should not cause errors (just whitespace)
+        var source = "key\tvalue\t\t\t";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        // Trailing tabs are harmless - no MultipleValuesOnLine error
+        Assert.IsFalse(result.Errors.Any(e => e.Code == TamlErrorCode.MultipleValuesOnLine));
+    }
+
+    [TestMethod]
+    public void WhenDeepNestingWithinLimitThenNoError()
+    {
+        // Deep but valid nesting
+        var source = "a\n\tb\n\t\tc\n\t\t\td\n\t\t\t\te\tvalue";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsFalse(result.Errors.Any(e => e.Code == TamlErrorCode.InconsistentIndentation));
+    }
+
+    [TestMethod]
+    public void WhenDedentSkipsLevelsThenValid()
+    {
+        // Dedenting multiple levels at once is valid
+        var source = """
+            root
+            	level1
+            		level2
+            			level3	value
+            other	value
+            """;
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsFalse(result.Errors.Any(e => e.Code == TamlErrorCode.InconsistentIndentation));
+    }
+
+    [TestMethod]
+    public void WhenTabOnlyLineThenHandledGracefully()
+    {
+        // Line with only tabs (no content)
+        var source = "key\tvalue\n\t\t\t\nother\tvalue";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        // Should not crash, tabs-only line treated as blank
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
+    public void WhenValueContainsSpecialCharsThenValid()
+    {
+        // Values can contain special characters (except tab)
+        var source = "url\thttps://example.com/path?query=value&other=123#anchor";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.IsSuccess);
+        var value = result.Tokens.First(t => t.Type == TamlTokenType.Value);
+        Assert.AreEqual("https://example.com/path?query=value&other=123#anchor", value.Value);
+    }
+
+    [TestMethod]
+    public void WhenKeyContainsHyphenAndUnderscoreThenValid()
+    {
+        // Keys with hyphens and underscores are valid
+        var source = "my-key_name\tvalue";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.IsSuccess);
+        var key = result.Tokens.First(t => t.Type == TamlTokenType.Key);
+        Assert.AreEqual("my-key_name", key.Value);
+    }
+
+    [TestMethod]
+    public void WhenEmptyDocumentThenNoErrors()
+    {
+        var source = "";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.IsSuccess);
+    }
+
+    [TestMethod]
+    public void WhenOnlyCommentsThenNoErrors()
+    {
+        var source = """
+            # Comment 1
+            # Comment 2
+            # Comment 3
+            """;
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.IsSuccess);
+    }
+
+    [TestMethod]
+    public void WhenConsecutiveParentKeysThenValid()
+    {
+        // Multiple parent keys in a row (each with their own children)
+        var source = """
+            parent1
+            	child1	value1
+            parent2
+            	child2	value2
+            parent3
+            	child3	value3
+            """;
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.IsSuccess);
+    }
+
+    [TestMethod]
+    public void WhenSiblingAfterNestedChildrenThenValid()
+    {
+        // Sibling at same level after deeply nested children
+        var source = """
+            server
+            	database
+            		host	localhost
+            		port	5432
+            	cache
+            		enabled	true
+            """;
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.IsSuccess);
+    }
+
+    [TestMethod]
+    public void WhenSpaceBetweenTabsThenError()
+    {
+        // Spaces between tabs (e.g., for alignment) are invalid
+        var source = "key\t \tvalue";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.HasErrors);
+        Assert.IsTrue(result.Errors.Any(e => e.Code == TamlErrorCode.SpaceSeparator));
+    }
+
+    [TestMethod]
+    public void WhenSpaceAfterTabBeforeValueThenError()
+    {
+        // Space after tab separator but before value is invalid
+        var source = "key\t value";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.HasErrors);
+        Assert.IsTrue(result.Errors.Any(e => e.Code == TamlErrorCode.SpaceSeparator));
+    }
+
+    [TestMethod]
+    public void WhenTrailingSpacesOnLineThenNoError()
+    {
+        // Trailing spaces at end of line are harmless
+        var source = "key\tvalue   ";
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsFalse(result.Errors.Any(e => e.Code == TamlErrorCode.SpaceSeparator));
     }
 }

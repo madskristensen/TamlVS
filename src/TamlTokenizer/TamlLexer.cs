@@ -217,8 +217,8 @@ public sealed class TamlLexer
             }
         }
 
-        // Check for errors
-        if (hasSpaces && _options.StrictMode)
+        // Check for errors - spaces in indentation are always invalid in TAML
+        if (hasSpaces)
         {
             if (hasMixedIndentation)
             {
@@ -382,6 +382,24 @@ public sealed class TamlLexer
             _column++;
         }
 
+        // Check for multiple tab separators on the same line (multiple values)
+        // TAML only allows one key-value pair per line: key<TAB>value
+        // Only report error if there's actual content after these tabs
+        // (not end of line, end of file, or trailing whitespace)
+        var hasContentAfter = _position < _source.Length &&
+                              Current != '\n' &&
+                              Current != '\r' &&
+                              Current != ' ' &&
+                              Current != '\t';
+
+        if (_afterTabSeparator && hasContentAfter)
+        {
+            _errors.Add(new TamlError(
+                "Only one value allowed per line",
+                start, tabCount, _line, startColumn,
+                TamlErrorCode.MultipleValuesOnLine));
+        }
+
         // After a tab separator, we're in value context
         // This means # should not be treated as a comment start
         _afterTabSeparator = true;
@@ -403,6 +421,24 @@ public sealed class TamlLexer
         }
 
         var value = _source.Substring(start, _position - start);
+
+        // Spaces as standalone tokens mid-line are always invalid in TAML
+        // - Before tab separator: spaces used instead of tabs to separate key from value
+        // - After tab separator: spaces before value content (should use tabs for alignment)
+        // Note: Spaces WITHIN values are valid and are consumed by ConsumeText, not here
+        // Only skip error for trailing spaces at end of line (harmless whitespace)
+        var isTrailingWhitespace = _position >= _source.Length ||
+                                   Current == '\n' ||
+                                   Current == '\r';
+
+        if (!isTrailingWhitespace)
+        {
+            _errors.Add(new TamlError(
+                "Use tabs, not spaces, to separate keys from values",
+                start, value.Length, _line, startColumn,
+                TamlErrorCode.SpaceSeparator));
+        }
+
         return new TamlToken(TamlTokenType.Whitespace, value, _line, startColumn, start, value.Length);
     }
 
@@ -470,10 +506,22 @@ public sealed class TamlLexer
         // Determine if this is a key or value based on context
         // A key is followed by tab(s) OR is at the start of a line (parent key or list item)
         // A value is after a tab separator
-        var isKey = _position < _source.Length && _source[_position] == '\t';
+        var isKeyWithValue = _position < _source.Length && _source[_position] == '\t';
+
+        // Check for spaces used as separator (key followed by space then more text before tab/newline)
+        // This catches "key value" where space is incorrectly used instead of tab
+        var spaceIndex = value.IndexOf(' ');
+        if (isKeyWithValue && spaceIndex >= 0)
+        {
+            _errors.Add(new TamlError(
+                "Use tabs, not spaces, to separate keys from values",
+                start + spaceIndex, 1, _line, startColumn + spaceIndex,
+                TamlErrorCode.SpaceSeparator));
+        }
 
         // Also consider it a key if it's at the start position of a line (after indentation)
         // This handles parent keys and list items which don't have tab-separated values
+        var isKey = isKeyWithValue;
         if (!isKey && startColumn == _currentIndentLevel + 1)
         {
             isKey = true;

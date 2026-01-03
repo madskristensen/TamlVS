@@ -334,7 +334,7 @@ public sealed class FaultToleranceTests
 
         if (result.HasErrors)
         {
-            TamlError error = result.Errors.First();
+            TamlError error = result.Errors[0];
             Assert.AreEqual(error.Position + error.Length, error.EndPosition);
         }
     }

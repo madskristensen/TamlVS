@@ -94,6 +94,18 @@ public static class TamlErrorCode
     /// </summary>
     public const string InvalidIndentationAfterValue = "TAML3005";
 
+    /// <summary>
+    /// Spaces used as separator instead of tabs.
+    /// TAML spec: Only tab characters may be used to separate keys from values.
+    /// </summary>
+    public const string SpaceSeparator = "TAML3006";
+
+    /// <summary>
+    /// Multiple values on the same line.
+    /// TAML spec: Each line can have at most one key-value pair.
+    /// </summary>
+    public const string MultipleValuesOnLine = "TAML3007";
+
     // Internal errors (9xxx)
 
     /// <summary>
