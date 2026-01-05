@@ -422,7 +422,7 @@ public sealed class ValidationErrorTests
         TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
-        var value = result.Tokens.First(t => t.Type == TamlTokenType.Value);
+        TamlToken value = result.Tokens.First(t => t.Type == TamlTokenType.Value);
         Assert.AreEqual("https://example.com/path?query=value&other=123#anchor", value.Value);
     }
 
@@ -435,7 +435,7 @@ public sealed class ValidationErrorTests
         TamlParseResult result = Taml.Tokenize(source);
 
         Assert.IsTrue(result.IsSuccess);
-        var key = result.Tokens.First(t => t.Type == TamlTokenType.Key);
+        TamlToken key = result.Tokens.First(t => t.Type == TamlTokenType.Key);
         Assert.AreEqual("my-key_name", key.Value);
     }
 

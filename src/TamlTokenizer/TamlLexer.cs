@@ -129,7 +129,7 @@ public sealed class TamlLexer
     {
         for (var i = 0; i < tokens.Count - 1; i++)
         {
-            var tokenType = tokens[i].Type;
+            TamlTokenType tokenType = tokens[i].Type;
             // Check if this is a value-type token that could be a list item
             if (tokenType == TamlTokenType.Value ||
                 tokenType == TamlTokenType.Boolean ||
@@ -141,7 +141,7 @@ public sealed class TamlLexer
                 var isListItem = false;
                 if (i > 0)
                 {
-                    var prevTokenType = tokens[i - 1].Type;
+                    TamlTokenType prevTokenType = tokens[i - 1].Type;
                     // List items are preceded by Indent, Newline, or are at the start
                     // Key-value values are preceded by Tab
                     isListItem = prevTokenType != TamlTokenType.Tab;
@@ -160,7 +160,7 @@ public sealed class TamlLexer
                 // Look ahead for the next meaningful token (skip newlines)
                 for (var j = i + 1; j < tokens.Count; j++)
                 {
-                    var nextToken = tokens[j];
+                    TamlToken nextToken = tokens[j];
                     if (nextToken.Type == TamlTokenType.Newline)
                     {
                         continue;
@@ -169,7 +169,7 @@ public sealed class TamlLexer
                     if (nextToken.Type == TamlTokenType.Indent)
                     {
                         // This list item has children, so it's actually a Key
-                        var originalToken = tokens[i];
+                        TamlToken originalToken = tokens[i];
                         tokens[i] = new TamlToken(
                             TamlTokenType.Key,
                             originalToken.Value,
