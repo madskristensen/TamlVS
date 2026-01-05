@@ -643,4 +643,100 @@ public sealed class ListTests
         Assert.IsTrue(numbers.Any(n => n.Value == "100"));
         Assert.IsTrue(numbers.Any(n => n.Value == "0"));
     }
+
+    /// <summary>
+    /// Tests the 06-mixed-structures.taml from TAML spec.
+    /// This is a comprehensive test covering servers with protocol lists, databases, and feature flags.
+    /// </summary>
+    [TestMethod]
+    public void WhenMixedStructuresSpecExampleThenParsesCorrectly()
+    {
+        // From TAML spec 06-mixed-structures.taml
+        var source = """
+            # Server configuration with lists
+            servers
+            	production
+            		host	prod.example.com
+            		port	443
+            		ssl	true
+            		protocols
+            			TLSv1.2
+            			TLSv1.3
+            	staging
+            		host	staging.example.com
+            		port	8443
+            		ssl	true
+            		protocols
+            			TLSv1.2
+
+            # Features list with nested config
+            features
+            	authentication
+            		enabled	true
+            		providers
+            			google
+            			github
+            			local
+            	caching
+            		enabled	true
+            		ttl	3600
+            		backend	redis
+
+            # Environment variables
+            env
+            	NODE_ENV	production
+            	DEBUG	false
+            	API_KEY	~
+            	SECRET	""
+            """;
+
+        TamlParseResult result = Taml.Tokenize(source);
+
+        Assert.IsTrue(result.IsSuccess, "Should parse without errors");
+        Assert.IsFalse(result.HasErrors, "Should have no validation errors");
+
+        // Verify comments are parsed
+        var comments = result.Tokens.Where(t => t.Type == TamlTokenType.Comment).ToList();
+        Assert.AreEqual(3, comments.Count);
+
+        // Verify server structure keys
+        var keys = result.Tokens.Where(t => t.Type == TamlTokenType.Key).ToList();
+        Assert.IsTrue(keys.Any(k => k.Value == "servers"));
+        Assert.IsTrue(keys.Any(k => k.Value == "production"));
+        Assert.IsTrue(keys.Any(k => k.Value == "staging"));
+        Assert.IsTrue(keys.Any(k => k.Value == "host"));
+        Assert.IsTrue(keys.Any(k => k.Value == "port"));
+        Assert.IsTrue(keys.Any(k => k.Value == "ssl"));
+        Assert.IsTrue(keys.Any(k => k.Value == "protocols"));
+
+        // Verify protocol list items (TLSv1.2 appears twice, TLSv1.3 once)
+        var values = result.Tokens.Where(t => t.Type == TamlTokenType.Value).ToList();
+        Assert.IsTrue(values.Any(v => v.Value == "TLSv1.2"));
+        Assert.IsTrue(values.Any(v => v.Value == "TLSv1.3"));
+
+        // Verify provider list items
+        Assert.IsTrue(values.Any(v => v.Value == "google"));
+        Assert.IsTrue(values.Any(v => v.Value == "github"));
+        Assert.IsTrue(values.Any(v => v.Value == "local"));
+        Assert.IsTrue(values.Any(v => v.Value == "redis"));
+
+        // Verify numbers (ports and ttl)
+        var numbers = result.Tokens.Where(t => t.Type == TamlTokenType.Number).ToList();
+        Assert.IsTrue(numbers.Any(n => n.Value == "443"));
+        Assert.IsTrue(numbers.Any(n => n.Value == "8443"));
+        Assert.IsTrue(numbers.Any(n => n.Value == "3600"));
+
+        // Verify booleans
+        var booleans = result.Tokens.Where(t => t.Type == TamlTokenType.Boolean).ToList();
+        Assert.IsTrue(booleans.Any(b => b.Value == "true"));
+        Assert.IsTrue(booleans.Any(b => b.Value == "false"));
+
+        // Verify null (API_KEY)
+        var nulls = result.Tokens.Where(t => t.Type == TamlTokenType.Null).ToList();
+        Assert.AreEqual(1, nulls.Count);
+
+        // Verify empty string (SECRET)
+        var emptyStrings = result.Tokens.Where(t => t.Type == TamlTokenType.EmptyString).ToList();
+        Assert.AreEqual(1, emptyStrings.Count);
+    }
 }
