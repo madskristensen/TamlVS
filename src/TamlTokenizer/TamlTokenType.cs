@@ -49,5 +49,13 @@ public enum TamlTokenType
     Boolean,
 
     /// <summary>A numeric value (integer or decimal).</summary>
-    Number
+    Number,
+
+    /// <summary>
+    /// A list item (value without a key, indented under a parent).
+    /// Note: List items are now classified by their value type (Value, Boolean, Number, etc.)
+    /// for proper syntax highlighting. This enum value is kept for backward compatibility.
+    /// </summary>
+    [System.Obsolete("List items are now classified by their value type (Value, Boolean, Number). This enum value is kept for backward compatibility.")]
+    ListItem
 }

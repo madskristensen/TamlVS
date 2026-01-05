@@ -24,6 +24,7 @@ public sealed class TamlLexer
     private readonly List<TamlError> _errors;
     private readonly Stack<int> _indentStack;
     private readonly Queue<TamlToken> _pendingTokens;
+    private readonly Stack<bool> _listContextStack; // true = parent is a list (no value), false = parent is an object
 
     private int _position;
     private int _line;
@@ -32,6 +33,7 @@ public sealed class TamlLexer
     private bool _atLineStart;
     private int _currentIndentLevel;
     private bool _afterTabSeparator;
+    private bool _lastKeyHadValue; // tracks if the most recent key had a tab-separated value
 
     /// <summary>
     /// Creates a new TAML lexer with default options.
@@ -54,6 +56,8 @@ public sealed class TamlLexer
         _indentStack = new Stack<int>();
         _indentStack.Push(0);
         _pendingTokens = new Queue<TamlToken>();
+        _listContextStack = new Stack<bool>();
+        _listContextStack.Push(false); // root level is not a list context
         _position = 0;
         _line = 1;
         _column = 1;
@@ -61,12 +65,14 @@ public sealed class TamlLexer
         _atLineStart = true;
         _currentIndentLevel = 0;
         _afterTabSeparator = false;
+        _lastKeyHadValue = false;
     }
 
     /// <summary>
     /// Gets the list of errors encountered during tokenization.
     /// </summary>
     public IReadOnlyList<TamlError> Errors => _errors;
+
 
     /// <summary>
     /// Tokenizes the entire source and returns all tokens.
@@ -107,7 +113,75 @@ public sealed class TamlLexer
         }
 
         tokens.Add(token); // Add EOF token
+
+        // Post-process: Reclassify list item value-type tokens that have children as Keys
+        // A list item (value token at start of line) followed by an Indent is actually a parent key
+        ReclassifyListItemsWithChildrenAsKeys(tokens);
+
         return tokens;
+    }
+
+    /// <summary>
+    /// Reclassifies list item value-type tokens (Value, Boolean, Number) that are followed by Indent tokens as Key tokens.
+    /// Only affects list items (values at start of line), not values in key-value pairs.
+    /// </summary>
+    private static void ReclassifyListItemsWithChildrenAsKeys(List<TamlToken> tokens)
+    {
+        for (var i = 0; i < tokens.Count - 1; i++)
+        {
+            var tokenType = tokens[i].Type;
+            // Check if this is a value-type token that could be a list item
+            if (tokenType == TamlTokenType.Value ||
+                tokenType == TamlTokenType.Boolean ||
+                tokenType == TamlTokenType.Number)
+            {
+                // Check if this is a list item (not preceded by a Tab, i.e., not a key-value value)
+                // A list item is a value at the start of a line, which means it's preceded by
+                // either Indent/Dedent or Newline, not by Tab
+                var isListItem = false;
+                if (i > 0)
+                {
+                    var prevTokenType = tokens[i - 1].Type;
+                    // List items are preceded by Indent, Newline, or are at the start
+                    // Key-value values are preceded by Tab
+                    isListItem = prevTokenType != TamlTokenType.Tab;
+                }
+                else
+                {
+                    // First token could be a list item if we ever support that
+                    isListItem = true;
+                }
+
+                if (!isListItem)
+                {
+                    continue;
+                }
+
+                // Look ahead for the next meaningful token (skip newlines)
+                for (var j = i + 1; j < tokens.Count; j++)
+                {
+                    var nextToken = tokens[j];
+                    if (nextToken.Type == TamlTokenType.Newline)
+                    {
+                        continue;
+                    }
+
+                    if (nextToken.Type == TamlTokenType.Indent)
+                    {
+                        // This list item has children, so it's actually a Key
+                        var originalToken = tokens[i];
+                        tokens[i] = new TamlToken(
+                            TamlTokenType.Key,
+                            originalToken.Value,
+                            originalToken.Line,
+                            originalToken.Column,
+                            originalToken.Position,
+                            originalToken.Length);
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -291,6 +365,8 @@ public sealed class TamlLexer
             }
 
             _indentStack.Push(newIndentLevel);
+            // If the last key had no value, this is a list context
+            _listContextStack.Push(!_lastKeyHadValue);
             _currentIndentLevel = newIndentLevel;
             return new TamlToken(TamlTokenType.Indent, new string('\t', newIndentLevel - currentLevel),
                 _line, startColumn, startPos, newIndentLevel - currentLevel);
@@ -301,6 +377,10 @@ public sealed class TamlLexer
             while (_indentStack.Count > 1 && _indentStack.Peek() > newIndentLevel)
             {
                 _indentStack.Pop();
+                if (_listContextStack.Count > 1)
+                {
+                    _listContextStack.Pop();
+                }
                 _pendingTokens.Enqueue(new TamlToken(TamlTokenType.Dedent, string.Empty,
                     _line, startColumn, startPos, 0));
             }
@@ -522,7 +602,8 @@ public sealed class TamlLexer
         // Also consider it a key if it's at the start position of a line (after indentation)
         // This handles parent keys and list items which don't have tab-separated values
         var isKey = isKeyWithValue;
-        if (!isKey && startColumn == _currentIndentLevel + 1)
+        var isLineStart = startColumn == _currentIndentLevel + 1;
+        if (!isKey && isLineStart)
         {
             isKey = true;
         }
@@ -530,7 +611,23 @@ public sealed class TamlLexer
         TamlTokenType type;
         if (isKey)
         {
-            type = TamlTokenType.Key;
+            // Track whether this key has a value (for list context detection)
+            _lastKeyHadValue = isKeyWithValue;
+
+
+            // Check if we're in a list context (parent had no value)
+            // List items are indented values without a tab separator
+            var isListContext = _listContextStack.Count > 0 && _listContextStack.Peek();
+            if (isListContext && !isKeyWithValue)
+            {
+                // This is a list item - classify by value type for proper highlighting
+                // List items are semantically values, so they get the same colorization
+                type = ClassifyValueType(value);
+            }
+            else
+            {
+                type = TamlTokenType.Key;
+            }
         }
         else
         {
