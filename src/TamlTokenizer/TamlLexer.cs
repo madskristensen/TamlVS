@@ -402,8 +402,11 @@ public sealed class TamlLexer
         var start = _position;
         var startColumn = _column;
         var startLine = _line;
+        var sourceLength = _source.Length;
 
-        if (Current == '\r' && Peek() == '\n')
+        // Check for CRLF vs LF - inline the character access for performance
+        if (_position < sourceLength && _source[_position] == '\r' &&
+            _position + 1 < sourceLength && _source[_position + 1] == '\n')
         {
             _position += 2;
         }
@@ -550,11 +553,11 @@ public sealed class TamlLexer
         var startColumn = _column;
 
         // Scan forward to find end of text (tab, newline, or end of source)
-        // This avoids StringBuilder allocation by using Substring
-        var maxEnd = Math.Min(_source.Length, start + _options.MaxStringLength + 1);
         var end = start;
+        var sourceLength = _source.Length;
+        var maxStringLength = _options.MaxStringLength;
 
-        while (end < _source.Length)
+        while (end < sourceLength)
         {
             var c = _source[end];
 
@@ -567,10 +570,10 @@ public sealed class TamlLexer
             end++;
 
             // Check string length limit
-            if (end - start > _options.MaxStringLength)
+            if (end - start > maxStringLength)
             {
                 _errors.Add(new TamlError(
-                    "String length (" + (end - start).ToString("N0") + ") exceeds maximum allowed (" + _options.MaxStringLength.ToString("N0") + ")",
+                    "String length (" + (end - start).ToString("N0") + ") exceeds maximum allowed (" + maxStringLength.ToString("N0") + ")",
                     start, end - start, _line, startColumn,
                     TamlErrorCode.InputSizeExceeded));
                 break;
@@ -586,17 +589,20 @@ public sealed class TamlLexer
         // Determine if this is a key or value based on context
         // A key is followed by tab(s) OR is at the start of a line (parent key or list item)
         // A value is after a tab separator
-        var isKeyWithValue = _position < _source.Length && _source[_position] == '\t';
+        var isKeyWithValue = _position < sourceLength && _source[_position] == '\t';
 
         // Check for spaces used as separator (key followed by space then more text before tab/newline)
         // This catches "key value" where space is incorrectly used instead of tab
-        var spaceIndex = value.IndexOf(' ');
-        if (isKeyWithValue && spaceIndex >= 0)
+        if (isKeyWithValue)
         {
-            _errors.Add(new TamlError(
-                "Use tabs, not spaces, to separate keys from values",
-                start + spaceIndex, 1, _line, startColumn + spaceIndex,
-                TamlErrorCode.SpaceSeparator));
+            var spaceIndex = value.IndexOf(' ');
+            if (spaceIndex >= 0)
+            {
+                _errors.Add(new TamlError(
+                    "Use tabs, not spaces, to separate keys from values",
+                    start + spaceIndex, 1, _line, startColumn + spaceIndex,
+                    TamlErrorCode.SpaceSeparator));
+            }
         }
 
         // Also consider it a key if it's at the start position of a line (after indentation)

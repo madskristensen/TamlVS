@@ -6,4 +6,5 @@
   <Folder Name="/test/">
     <Project Path="test/TamlTokenizer.Test/TamlTokenizer.Test.csproj" />
   </Folder>
+  <Project Path="test/TamlTokenizer.Benchmarks/TamlTokenizer.Benchmarks.csproj" />
 </Solution>
