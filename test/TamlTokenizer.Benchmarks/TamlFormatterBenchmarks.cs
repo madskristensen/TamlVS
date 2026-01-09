@@ -77,8 +77,10 @@ public class TamlFormatterBenchmarks
     /// </summary>
     private static string GenerateUnformattedMedium()
     {
-        var lines = new List<string>(220);
-        lines.Add("# Medium document for formatting");
+        var lines = new List<string>(220)
+        {
+            "# Medium document for formatting"
+        };
 
         for (var i = 0; i < 30; i++)
         {
@@ -99,8 +101,10 @@ public class TamlFormatterBenchmarks
     /// </summary>
     private static string GenerateUnformattedLarge()
     {
-        var lines = new List<string>(1100);
-        lines.Add("# Large document");
+        var lines = new List<string>(1100)
+        {
+            "# Large document"
+        };
 
         for (var i = 0; i < 100; i++)
         {

@@ -6,7 +6,7 @@ using TamlTokenizer.Benchmarks;
 // Usage: dotnet run -c Release
 // Or run specific benchmark: dotnet run -c Release -- --filter "*Lexer*"
 
-var config = DefaultConfig.Instance;
+IConfig config = DefaultConfig.Instance;
 
 #if DEBUG
 Console.WriteLine("WARNING: Running benchmarks in DEBUG mode. Results will not be accurate.");

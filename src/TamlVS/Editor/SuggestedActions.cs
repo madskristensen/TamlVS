@@ -17,11 +17,11 @@ namespace TamlVS.Editor
     {
         public ISuggestedActionsSource CreateSuggestedActionsSource(ITextView textView, ITextBuffer textBuffer)
         {
-            return new SuggestedActionsSource(textView, textBuffer);
+            return new SuggestedActionsSource(textBuffer);
         }
     }
 
-    internal class SuggestedActionsSource(ITextView textView, ITextBuffer textBuffer) : ISuggestedActionsSource2
+    internal class SuggestedActionsSource(ITextBuffer textBuffer) : ISuggestedActionsSource2
     {
         public event EventHandler<EventArgs> SuggestedActionsChanged { add { } remove { } }
 
@@ -32,13 +32,13 @@ namespace TamlVS.Editor
             SnapshotSpan range,
             CancellationToken cancellationToken)
         {
-            var cursorLine = GetCursorLineNumber(range.Snapshot);
+            var lineNumber = range.Start.GetContainingLine().LineNumber;
 
-            if (TamlSorter.CanSort(range.Snapshot, cursorLine))
+            if (TamlSorter.CanSort(range.Snapshot, lineNumber))
             {
                 yield return new SuggestedActionSet(
                     categoryName: PredefinedSuggestedActionCategoryNames.Refactoring,
-                    actions: [new SortKeysAction(range.Snapshot, cursorLine, textBuffer)],
+                    actions: [new SortKeysAction(range.Snapshot, lineNumber, textBuffer)],
                     title: "TAML");
             }
         }
@@ -48,7 +48,14 @@ namespace TamlVS.Editor
             SnapshotSpan range,
             CancellationToken cancellationToken)
         {
-            return Task.FromResult(requestedActionCategories);
+            var lineNumber = range.Start.GetContainingLine().LineNumber;
+
+            if (TamlSorter.CanSort(range.Snapshot, lineNumber))
+            {
+                return Task.FromResult(requestedActionCategories);
+            }
+
+            return Task.FromResult<ISuggestedActionCategorySet>(null);
         }
 
         public Task<bool> HasSuggestedActionsAsync(
@@ -56,20 +63,14 @@ namespace TamlVS.Editor
             SnapshotSpan range,
             CancellationToken cancellationToken)
         {
-            var cursorLine = GetCursorLineNumber(range.Snapshot);
-            return Task.FromResult(TamlSorter.CanSort(range.Snapshot, cursorLine));
+            var lineNumber = range.Start.GetContainingLine().LineNumber;
+            return Task.FromResult(TamlSorter.CanSort(range.Snapshot, lineNumber));
         }
 
         public bool TryGetTelemetryId(out Guid telemetryId)
         {
             telemetryId = Guid.Empty;
             return false;
-        }
-
-        private int GetCursorLineNumber(ITextSnapshot snapshot)
-        {
-            var caretPosition = textView.Caret.Position.BufferPosition.Position;
-            return snapshot.GetLineFromPosition(caretPosition).LineNumber;
         }
     }
 

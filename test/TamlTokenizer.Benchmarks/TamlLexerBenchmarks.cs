@@ -93,8 +93,10 @@ public class TamlLexerBenchmarks
     /// </summary>
     private static string GenerateMediumTaml()
     {
-        var lines = new List<string>(220);
-        lines.Add("# Medium configuration");
+        var lines = new List<string>(220)
+        {
+            "# Medium configuration"
+        };
 
         for (var i = 0; i < 20; i++)
         {
@@ -118,8 +120,10 @@ public class TamlLexerBenchmarks
     /// </summary>
     private static string GenerateLargeTaml()
     {
-        var lines = new List<string>(2100);
-        lines.Add("# Large configuration");
+        var lines = new List<string>(2100)
+        {
+            "# Large configuration"
+        };
 
         for (var i = 0; i < 200; i++)
         {
@@ -142,9 +146,11 @@ public class TamlLexerBenchmarks
     /// </summary>
     private static string GenerateDeeplyNestedTaml()
     {
-        var lines = new List<string>(100);
-        lines.Add("# Deeply nested structure");
-        lines.Add("root");
+        var lines = new List<string>(100)
+        {
+            "# Deeply nested structure",
+            "root"
+        };
 
         for (var depth = 1; depth <= 20; depth++)
         {
@@ -170,9 +176,11 @@ public class TamlLexerBenchmarks
     /// </summary>
     private static string GenerateWideTaml()
     {
-        var lines = new List<string>(1100);
-        lines.Add("# Wide structure with many siblings");
-        lines.Add("items");
+        var lines = new List<string>(1100)
+        {
+            "# Wide structure with many siblings",
+            "items"
+        };
 
         for (var i = 0; i < 500; i++)
         {

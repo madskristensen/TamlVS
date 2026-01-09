@@ -36,62 +36,8 @@ namespace TamlVS.Editor
         /// </summary>
         public static bool CanSort(ITextSnapshot snapshot, int cursorLineNumber)
         {
-            if (cursorLineNumber >= snapshot.LineCount)
-            {
-                return false;
-            }
-
-            var parentText = snapshot.GetLineFromLineNumber(cursorLineNumber).GetText();
-            if (string.IsNullOrWhiteSpace(parentText))
-            {
-                return false;
-            }
-
-            var parentIndent = GetIndent(parentText);
-            var childIndent = -1;
-            var keys = new List<string>();
-
-            for (var i = cursorLineNumber + 1; i < snapshot.LineCount; i++)
-            {
-                var lineText = snapshot.GetLineFromLineNumber(i).GetText();
-                if (string.IsNullOrWhiteSpace(lineText))
-                {
-                    break;
-                }
-
-                var indent = GetIndent(lineText);
-                if (indent <= parentIndent)
-                {
-                    break;
-                }
-
-                if (childIndent < 0)
-                {
-                    childIndent = indent;
-                }
-
-                if (indent == childIndent)
-                {
-                    keys.Add(ExtractKey(lineText.TrimStart()));
-                }
-            }
-
-            if (keys.Count < 2)
-            {
-                return false;
-            }
-
-            // Check if already sorted
-            var sortedKeys = keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList();
-            for (var i = 0; i < keys.Count; i++)
-            {
-                if (!string.Equals(keys[i], sortedKeys[i], StringComparison.OrdinalIgnoreCase))
-                {
-                    return true; // Not sorted, can sort
-                }
-            }
-
-            return false; // Already sorted
+            // Use the same logic as Sort to ensure consistency
+            return Sort(snapshot, cursorLineNumber) != null;
         }
 
         /// <summary>

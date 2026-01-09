@@ -51,8 +51,10 @@ public class TamlApiBenchmarks
     /// </summary>
     private static string GenerateValidTaml()
     {
-        var lines = new List<string>(550);
-        lines.Add("# Valid TAML document");
+        var lines = new List<string>(550)
+        {
+            "# Valid TAML document"
+        };
 
         for (var i = 0; i < 50; i++)
         {
@@ -75,8 +77,10 @@ public class TamlApiBenchmarks
     /// </summary>
     private static string GenerateTamlWithErrors()
     {
-        var lines = new List<string>(300);
-        lines.Add("# TAML with some issues");
+        var lines = new List<string>(300)
+        {
+            "# TAML with some issues"
+        };
 
         for (var i = 0; i < 30; i++)
         {
