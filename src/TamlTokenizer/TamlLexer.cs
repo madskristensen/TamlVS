@@ -16,15 +16,31 @@ namespace TamlTokenizer;
 /// </remarks>
 public sealed class TamlLexer
 {
-    // Cached tab strings to avoid allocations for common cases
-    private static readonly string[] _cachedTabs = ["", "\t", "\t\t", "\t\t\t", "\t\t\t\t"];
+    // Cached tab strings to avoid allocations for common cases (extended for deeper nesting)
+    private static readonly string[] _cachedTabs = ["", "\t", "\t\t", "\t\t\t", "\t\t\t\t", "\t\t\t\t\t", "\t\t\t\t\t\t", "\t\t\t\t\t\t\t", "\t\t\t\t\t\t\t\t"];
+
+    // Cached common values to avoid repeated allocations
+    private const string CachedTrue = "true";
+    private const string CachedFalse = "false";
+    private const string CachedNewline = "\n";
+    private const string CachedEmpty = "";
+    private const string CachedNull = "~";
+    private const string CachedEmptyString = "\"\"";
 
     private readonly string _source;
     private readonly TamlParserOptions _options;
     private readonly List<TamlError> _errors;
-    private readonly Stack<int> _indentStack;
-    private readonly Queue<TamlToken> _pendingTokens;
-    private readonly Stack<bool> _listContextStack; // true = parent is a list (no value), false = parent is an object
+
+    // Array-based stacks to avoid allocation overhead of Stack<T>
+    private readonly int[] _indentLevels;
+    private int _indentStackTop;
+    private readonly bool[] _listContexts;
+    private int _listContextTop;
+
+    // Array-based pending tokens (replaces Queue<TamlToken>)
+    private readonly TamlToken[] _pendingTokens;
+    private int _pendingTokenStart;
+    private int _pendingTokenEnd;
 
     private int _position;
     private int _line;
@@ -52,12 +68,23 @@ public sealed class TamlLexer
     {
         _source = source ?? throw new ArgumentNullException(nameof(source));
         _options = options ?? TamlParserOptions.Default;
-        _errors = [];
-        _indentStack = new Stack<int>();
-        _indentStack.Push(0);
-        _pendingTokens = new Queue<TamlToken>();
-        _listContextStack = new Stack<bool>();
-        _listContextStack.Push(false); // root level is not a list context
+        _errors = new List<TamlError>();
+
+        // Pre-allocate arrays based on max nesting depth (plus buffer)
+        var maxDepth = _options.MaxNestingDepth + 2;
+        _indentLevels = new int[maxDepth];
+        _indentLevels[0] = 0;
+        _indentStackTop = 0;
+
+        _listContexts = new bool[maxDepth];
+        _listContexts[0] = false; // root level is not a list context
+        _listContextTop = 0;
+
+        // Pre-allocate pending tokens array (dedents rarely exceed nesting depth)
+        _pendingTokens = new TamlToken[maxDepth];
+        _pendingTokenStart = 0;
+        _pendingTokenEnd = 0;
+
         _position = 0;
         _line = 1;
         _column = 1;
@@ -191,21 +218,21 @@ public sealed class TamlLexer
     public TamlToken NextToken()
     {
         // Return any pending tokens (indent/dedent)
-        if (_pendingTokens.Count > 0)
+        if (_pendingTokenStart < _pendingTokenEnd)
         {
-            return _pendingTokens.Dequeue();
+            return _pendingTokens[_pendingTokenStart++];
         }
 
         // Handle end of file
         if (_position >= _source.Length)
         {
             // Emit dedents for remaining indent levels
-            if (_indentStack.Count > 1)
+            if (_indentStackTop > 0)
             {
-                _indentStack.Pop();
-                return CreateToken(TamlTokenType.Dedent, string.Empty);
+                _indentStackTop--;
+                return CreateToken(TamlTokenType.Dedent, CachedEmpty);
             }
-            return CreateToken(TamlTokenType.EndOfFile, string.Empty);
+            return CreateToken(TamlTokenType.EndOfFile, CachedEmpty);
         }
 
         var current = Current;
@@ -342,7 +369,7 @@ public sealed class TamlLexer
 
     private TamlToken? ProcessIndentChange(int newIndentLevel, int startPos, int startColumn)
     {
-        var currentLevel = _indentStack.Peek();
+        var currentLevel = _indentLevels[_indentStackTop];
 
         if (newIndentLevel > currentLevel)
         {
@@ -364,32 +391,42 @@ public sealed class TamlLexer
                     TamlErrorCode.NestingDepthExceeded));
             }
 
-            _indentStack.Push(newIndentLevel);
+            _indentStackTop++;
+            _indentLevels[_indentStackTop] = newIndentLevel;
             // If the last key had no value, this is a list context
-            _listContextStack.Push(!_lastKeyHadValue);
+            _listContextTop++;
+            _listContexts[_listContextTop] = !_lastKeyHadValue;
             _currentIndentLevel = newIndentLevel;
-            return new TamlToken(TamlTokenType.Indent, new string('\t', newIndentLevel - currentLevel),
-                _line, startColumn, startPos, newIndentLevel - currentLevel);
+
+            // Use cached tab string if available
+            var tabDiff = newIndentLevel - currentLevel;
+            var tabValue = tabDiff < _cachedTabs.Length ? _cachedTabs[tabDiff] : new string('\t', tabDiff);
+            return new TamlToken(TamlTokenType.Indent, tabValue,
+                _line, startColumn, startPos, tabDiff);
         }
         else if (newIndentLevel < currentLevel)
         {
+            // Reset pending tokens buffer
+            _pendingTokenStart = 0;
+            _pendingTokenEnd = 0;
+
             // Emit dedent tokens
-            while (_indentStack.Count > 1 && _indentStack.Peek() > newIndentLevel)
+            while (_indentStackTop > 0 && _indentLevels[_indentStackTop] > newIndentLevel)
             {
-                _indentStack.Pop();
-                if (_listContextStack.Count > 1)
+                _indentStackTop--;
+                if (_listContextTop > 0)
                 {
-                    _listContextStack.Pop();
+                    _listContextTop--;
                 }
-                _pendingTokens.Enqueue(new TamlToken(TamlTokenType.Dedent, string.Empty,
-                    _line, startColumn, startPos, 0));
+                _pendingTokens[_pendingTokenEnd++] = new TamlToken(TamlTokenType.Dedent, CachedEmpty,
+                    _line, startColumn, startPos, 0);
             }
 
             _currentIndentLevel = newIndentLevel;
 
-            if (_pendingTokens.Count > 0)
+            if (_pendingTokenStart < _pendingTokenEnd)
             {
-                return _pendingTokens.Dequeue();
+                return _pendingTokens[_pendingTokenStart++];
             }
         }
 
@@ -429,7 +466,7 @@ public sealed class TamlLexer
                 TamlErrorCode.InputSizeExceeded));
         }
 
-        return new TamlToken(TamlTokenType.Newline, "\n", startLine, startColumn, start, _position - start);
+        return new TamlToken(TamlTokenType.Newline, CachedNewline, startLine, startColumn, start, _position - start);
     }
 
     private TamlToken ConsumeComment()
@@ -533,7 +570,7 @@ public sealed class TamlLexer
         _position++;
         _column++;
 
-        return new TamlToken(TamlTokenType.Null, "~", _line, startColumn, start, 1);
+        return new TamlToken(TamlTokenType.Null, CachedNull, _line, startColumn, start, 1);
     }
 
     private TamlToken ConsumeEmptyString()
@@ -544,7 +581,7 @@ public sealed class TamlLexer
         _position += 2;
         _column += 2;
 
-        return new TamlToken(TamlTokenType.EmptyString, "\"\"", _line, startColumn, start, 2);
+        return new TamlToken(TamlTokenType.EmptyString, CachedEmptyString, _line, startColumn, start, 2);
     }
 
     private TamlToken ConsumeText()
@@ -591,6 +628,16 @@ public sealed class TamlLexer
         // A value is after a tab separator
         var isKeyWithValue = _position < sourceLength && _source[_position] == '\t';
 
+        // Use interned strings for common boolean values to reduce allocations
+        if (length == 4 && _source[start] == 't' && value == CachedTrue)
+        {
+            value = CachedTrue;
+        }
+        else if (length == 5 && _source[start] == 'f' && value == CachedFalse)
+        {
+            value = CachedFalse;
+        }
+
         // Check for spaces used as separator (key followed by space then more text before tab/newline)
         // This catches "key value" where space is incorrectly used instead of tab
         if (isKeyWithValue)
@@ -623,7 +670,7 @@ public sealed class TamlLexer
 
             // Check if we're in a list context (parent had no value)
             // List items are indented values without a tab separator
-            var isListContext = _listContextStack.Count > 0 && _listContextStack.Peek();
+            var isListContext = _listContextTop >= 0 && _listContexts[_listContextTop];
             if (isListContext && !isKeyWithValue)
             {
                 // This is a list item - classify by value type for proper highlighting
